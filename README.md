@@ -5,9 +5,21 @@
 
 ---
 
+## Related tools & links
+
+- **Garmin Edge data field (nrg app / budget):**  
+  https://apps.garmin.com/apps/dd38c248-4d2b-4e97-9d93-90d25e731aa2
+
+- **Artículo en Medium – análisis de consumo energético y monitoreo en ciclismo:**  
+  https://medium.com/@gdellamattia/análisis-del-consumo-energético-en-ciclismo-de-resistencia-y-herramientas-para-su-monitoreo-940ef9df9500
+
+- **Colaboración / Support the project:**  
+  https://paypal.me/agmt2?country.x=AR&locale.x=es_XC
+
 ## What this is
 
 A self‑contained web app to **plan fueling and glycogen management** for endurance cycling using **Critical Power (CP)** and **power‑duration (MMP)** data. It converts power and time into **mechanical → metabolic energy**, estimates **CHO needs**, proposes **dose schedules** within intestinal transport limits (SGLT1/GLUT5), and visualizes a **muscle glycogen curve** alongside the intake timeline.
+
 
 > Decision rules and caps follow contemporary sports‑nutrition literature (ACSM/IOC/Jeukendrup et al.). See **References**.
 
@@ -157,4 +169,7 @@ Choose what fits your repo (MIT/Apache‑2.0). If unsure, MIT is common for clie
 
 ---
 
-**Contact:** @gdellamattia — suggestions welcome (e.g., FPCA of MMP, athlete presets, PDF export).
+**Contact:** 
+gadellamattia@gmail.coom — suggestions welcome.
+IG : @agmt2.team
+X : @gdellamattia
