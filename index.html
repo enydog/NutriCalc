@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Interactive Simulator (Nutrition Planning) — CP · kJ/kg · CHO</title>
+  <style>
+    /* Modern theme */
+    :root{
+      --bg1:#0b1220; --bg2:#0f172a; --bg3:#1e293b;
+      --card:#0f172a; --card2:#111827; --ink:#e5e7eb; --muted:#94a3b8;
+      --border:#22314b; --accent:#22d3ee; --accent2:#a78bfa; --ok:#34d399; --warn:#fbbf24; --bad:#f87171;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(34,211,238,.18), transparent 60%),
+                  radial-gradient(1200px 700px at 100% 0%, rgba(167,139,250,.18), transparent 60%),
+                  linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));}
+    .wrap{max-width:1180px;margin:0 auto;padding:18px}
+    h1{font-weight:800;letter-spacing:-.01em;margin:0 0 4px;font-size:24px}
+    .muted{color:var(--muted);font-size:12px;margin:0}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media (min-width:1024px){.grid{grid-template-columns:2fr 3fr}}
+    .card{background:linear-gradient(180deg,rgba(17,24,39,.9),rgba(17,24,39,.85));border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .label{font-size:11px;color:#a3b2c7;margin-bottom:2px}
+    .ibox{display:flex;align-items:center;gap:8px;border:1px solid var(--border);padding:6px 8px;border-radius:10px;background:rgba(2,6,23,.6)}
+    input[type=number]{width:100%;border:0;outline:0;font-size:13px;color:var(--ink);background:transparent}
+    input[type=range]{width:100%;height:20px}
+    select{width:100%;border:1px solid var(--border);background:rgba(2,6,23,.6);color:var(--ink);border-radius:10px;padding:6px 8px;font-size:12px}
+    .pill{background:rgba(2,6,23,.6);border:1px solid var(--border);border-radius:12px;padding:6px 10px}
+    .pill .t{font-size:10px;color:#9aa6b2}
+    .pill .v{font-weight:700}
+    .btn{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#0b1220;border:0;border-radius:10px;padding:6px 10px;font-size:12px;cursor:pointer}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .chips{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{border:1px solid var(--border);background:rgba(2,6,23,.6);border-radius:999px;padding:4px 8px;font-size:11px;cursor:pointer}
+    .hint{color:#8ea0b5;font-size:11px}
+    .chart-wrap{width:100%;height:320px;position:relative}
+    .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#cbd5e1;border:1px dashed rgba(255,255,255,.08);border-radius:10px;background:linear-gradient(180deg, rgba(2,6,23,.55), rgba(2,6,23,.30));padding:8px}
+    svg{width:100%;height:100%}
+    /* watermark + icons */
+    .chart-wrap{position:relative}
+    .chart-wrap::before{content:"";position:absolute;inset:0;background-repeat:no-repeat;background-position:calc(100% - 12px) 12px;background-size:120px auto;opacity:.12;filter:saturate(1.05);pointer-events:none;z-index:0;background-image:var(--logo-url)}
+    .chart-wrap svg{position:relative;z-index:1}
+    .overlay{z-index:2}
+    .overlay .ovl{max-width:560px;text-align:center;line-height:1.25;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+    .overlay .ovl-strong{font-size:20px;font-weight:800;letter-spacing:.2px;color:#e5e7eb;margin:2px 0 4px}
+    .overlay .ovl-line{font-size:13px;color:#cbd5e1;opacity:.95}
+    .overlay .ovl-sub{font-size:12px;color:#9fb2c7;opacity:.95}
+    .btn .ico{display:inline-block;width:14px;height:14px;background-image:var(--logo-url);background-size:cover;background-repeat:no-repeat;border-radius:3px;vertical-align:-2px;margin-right:6px;box-shadow:0 1px 2px rgba(0,0,0,.35)}
+    .row-tight{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .toolbar{display:flex;gap:8px;align-items:center}
+      /* brand header */
+    .brand{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+    .brand img.logo{height:40px;width:auto;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+    @media (max-width:480px){.brand img.logo{height:32px}}
+  </style>
+  <link rel="icon" type="image/png" href="logo.png"/>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><img class="logo" src="logo.png" alt="Logo" onerror="this.style.display='none'"/><div><h1>Interactive Simulator (Nutrition Planning)</h1><p class="muted">Author: <b>Gabriel Della Mattia</b> · Produced for <b>AGMT2.TEAM</b></p></div></div>
+
+  <div class="grid" style="margin-top:8px">
+    <!-- Left column (compact controls) -->
+    <div>
+      <div class="card">
+        <div class="row-tight">
+          <label>
+            <div class="label">Weight</div>
+            <div class="ibox">
+              <input id="inp-weight" type="number" min="30" max="120" step="0.1" value="72"/>
+              <span class="hint">kg</span>
+            </div>
+          </label>
+          <label>
+            <div class="label">CP (W) <span class="hint">(auto from MMP)</span></div>
+            <div class="ibox">
+              <input id="inp-cp" type="number" min="120" max="500" step="1" value="250"/>
+              <span class="hint">W</span>
+            </div>
+          </label>
+          <label>
+            <div class="label">Auto‑CP from MMP</div>
+            <div class="ibox" style="justify-content:space-between">
+              <span class="hint">Use CP estimated on CSV load</span>
+              <input id="chk-cp-auto" type="checkbox" checked/>
+            </div>
+          </label>
+        </div>
+        <div class="pill" style="margin-top:8px;max-width:340px">
+          <div class="t">Estimation</div>
+          <div class="v" id="pill-cp">CP ? · W′ ?</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+          <div>
+            <div style="font-size:13px;font-weight:600">Power Curves (CSV)</div>
+            <div class="hint">Wide m1..m18000 or long (Date, Duration, Power). &lt;60 s filtered.</div>
+          </div>
+          <div class="toolbar">
+            <button id="btn-upload" class="btn">Upload CSV</button>
+            <input id="file" type="file" accept=".csv,text/csv" hidden/>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:8px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Effort projection (compact)</div>
+        <div class="row-tight">
+          <label>
+            <div class="label">Duration <b id="lbl-dur">60:00</b></div>
+            <input id="rng-dur" type="range" min="60" max="21600" step="15" value="3600"/>
+          </label>
+          <label>
+            <div class="label">Power <b id="lbl-w">250 W</b></div>
+            <input id="rng-w" type="range" min="50" max="800" step="5" value="250"/>
+          </label>
+          <label>
+            <div class="label">Gross eff. <b id="lbl-eff">24%</b></div>
+            <input id="rng-eff" type="range" min="0.18" max="0.25" step="0.01" value="0.24"/>
+          </label>
+        </div>
+        <div class="row-tight" style="margin-top:6px">
+          <div class="pill"><div class="t">Domain</div><div class="v" id="pill-domain">-</div></div>
+          <div class="pill"><div class="t">Intensity</div><div class="v" id="pill-int">-</div></div>
+          <div class="pill"><div class="t">kJ/kg</div><div class="v" id="pill-kjkg">-</div></div>
+        </div>
+        <div class="row-tight" style="margin-top:6px">
+          <div class="pill"><div class="t">Mechanical kJ</div><div class="v" id="pill-kj">-</div></div>
+          <div class="pill"><div class="t">Metabolic kcal</div><div class="v" id="pill-kcal">-</div></div>
+          <div class="pill"><div class="t">kcal/kg</div><div class="v" id="pill-kcalkg">-</div></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:8px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Didactic text</div>
+        <div id="txt-session" style="color:#e5e7eb"></div>
+        <div class="hint" style="margin-top:6px">kJ/kg = (W·s)/1000/kg. CHO fraction ↑ with %CP.</div>
+      </div>
+    </div>
+
+    <!-- Right column: timeline + CHO strategy below (to reduce scroll) -->
+    <div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="font-size:13px;font-weight:600">Ingestion timeline & muscle glycogen</div>
+          <div class="toolbar">
+            <button id="btn-copy" class="btn" title="Copy handlebar guide"><span class="ico"></span>Copy guide</button>
+            <button id="btn-export" class="btn" title="Download TXT"><span class="ico"></span>Export TXT</button>
+          </div>
+        </div>
+        <div class="hint" id="lbl-coverage" style="margin-bottom:6px">Load your CSV to estimate CP</div>
+        <div class="chart-wrap">
+          <div class="overlay" id="overlay"><div class="ovl"><div class="ovl-line">Fueling is generally</div><div class="ovl-strong">NOT REQUIRED &lt; 2 h</div><div class="ovl-sub">unless high intensity or low glycogen</div><div class="ovl-sub">Increase duration to see the schedule</div></div></div>
+          <svg id="chart" viewBox="0 0 900 320" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="row-tight" style="margin-top:8px">
+          <div class="pill"><div class="t">Dose size</div><div class="v" id="pill-dose">-</div></div>
+          <div class="pill"><div class="t"># doses</div><div class="v" id="pill-dose-n">-</div></div>
+          <div class="pill"><div class="t">Last dose</div><div class="v" id="pill-dose-last">-</div></div>
+        </div>
+      </div>
+
+      <!-- CHO strategy moved below timeline -->
+      <div class="card" style="margin-top:8px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px">Carbohydrate strategy (stores + intake)</div>
+        <div class="row">
+          <label>
+            <div class="label">Initial glycogen</div>
+            <div class="ibox"><input id="inp-glyinit" type="number" min="100" max="800" step="10" value="400"/><span class="hint">g</span></div>
+          </label>
+          <label>
+            <div class="label">Reserve to keep</div>
+            <div class="ibox"><input id="inp-glyres" type="number" min="0" max="200" step="10" value="100"/><span class="hint">g</span></div>
+          </label>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <label>
+            <div class="label">Intestinal transport</div>
+            <select id="sel-mode">
+              <option value="G60">Glucose (SGLT1) · ≤60 g/h</option>
+              <option value="GF90" selected>Glucose+Fructose (2:1) · ≤90 g/h</option>
+              <option value="GF120">High (1:1, gut‑trained) · ≤120 g/h</option>
+            </select>
+          </label>
+          <label>
+            <div class="label">Planned intake: <b id="lbl-intake">60 g/h</b> (cap <span id="lbl-intakecap">90</span>)</div>
+            <input id="rng-intake" type="range" min="0" max="90" step="5" value="60"/>
+          </label>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <label>
+            <div class="label">Dose cadence</div>
+            <select id="sel-cad">
+              <option value="10">every 10 min</option>
+              <option value="12">every 12 min</option>
+              <option value="15" selected>every 15 min</option>
+              <option value="20">every 20 min</option>
+            </select>
+          </label>
+          <label>
+            <div class="label">Start at</div>
+            <select id="sel-start">
+              <option value="0">0 min</option>
+              <option value="10">10 min</option>
+              <option value="15">15 min</option>
+              <option value="20">20 min</option>
+              <option value="120" selected>120 min (default for &lt;2h rule)</option>
+            </select>
+          </label>
+        </div>
+        <div class="row-3" style="margin-top:6px">
+          <div class="pill"><div class="t">CHO required</div><div class="v" id="pill-cho-req">-</div></div>
+          <div class="pill"><div class="t">Planned exogenous</div><div class="v" id="pill-cho-exo">-</div></div>
+          <div class="pill"><div class="t">Final glycogen</div><div class="v" id="pill-gly-end">-</div></div>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <div class="pill" style="grid-column:1 / -1"><div class="t">Recommendation</div><div class="v" id="pill-cho-rec">-</div></div>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <div class="pill" style="grid-column:1 / -1"><div class="t">Split</div><div class="v" id="pill-split">-</div></div>
+        </div>
+        <div class="hint" style="margin-top:6px">Frequent small boluses (10–15′) aid tolerance & oxidation. 2:1 for ~90 g/h; 1:1 with gut training for ~120 g/h.</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="muted" style="margin-top:8px">Title: <b>Simulador Interactivo (Planificacion Nutricion)</b> · Author: <b>Gabriel Della Mattia</b> · Produced for <b>AGMT2.TEAM</b></p>
+</div>
+
+<script>
+// ======== State ========
+// set CSS var with logo URL (used for watermark & badges)
+(function(){
+  try{
+    const url = 'logo.png';
+    // set CSS var for watermark/buttons
+    document.documentElement.style.setProperty('--logo-url', `url('${url}')`);
+    // ensure header logo uses the runtime file
+    const logo = document.querySelector('.logo');
+    if (logo) { logo.src = url; }
+  }catch(e){ console.warn('Logo CSS var not set', e); }
+})();
+const state = {
+  weight: 72,
+  cp: 250,
+  rows: [],
+  effDur: 3600,
+  effW: 250,
+  mmp: [],
+  dateRange: null,
+  efficiency: 0.24,
+  // Fueling
+  glyInit: 400,
+  glyReserve: 100,
+  intakeMode: 'GF90',
+  intakeCap: 90,
+  intakeRate: 60,
+  cadenceMin: 15,
+  startMin: 120, // default obeying <2h rule
+  autoCP: true,
+  cpEst: null,
+  wPrime: null,
+};
+
+// ======== Utils ========
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function fmtDuration(sec){ if(!Number.isFinite(sec)) return "-"; const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=Math.round(sec%60); if(h>0)return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; return `${m}:${String(s).padStart(2,'0')}`; }
+function fmtKJkg(x){ return Number.isFinite(x)?`${x.toFixed(2)} kJ/kg`:"-"; }
+function inferDateRange(rows){ const ts=rows.map(r=>r.fecha).filter(Boolean).map(d=>{ const [dd,mm,yyyy]=String(d).split(/[\/-]/).map(Number); if(!yyyy||!mm||!dd) return null; return new Date(yyyy,mm-1,dd).getTime(); }).filter(t=>Number.isFinite(t)); if(!ts.length) return null; return {min:new Date(Math.min(...ts)),max:new Date(Math.max(...ts))}; }
+function monotonicEnvelopeByDuration(points){ let prev=Infinity; return points.map(d=>{ const v=Math.min(d.power,prev); prev=v; return {...d, power_env:v}; }); }
+
+function buildMMP(rows){ const map=new Map(); for(const r of rows){ if(r.dur_s<60) continue; const key=r.dur_s; map.set(key, Math.max(map.get(key)||-Infinity, r.power)); } const list=Array.from(map.entries()).map(([dur_s,power])=>({duration:+dur_s,power:+power})).sort((a,b)=>a.duration-b.duration); return monotonicEnvelopeByDuration(list).map(d=>({duration:d.duration,power:d.power_env})); }
+
+// ======== CP estimator (P = W'/t + CP) ========
+function estimateCP(mmp){
+  const pts = mmp.filter(p=>p.duration>=120 && p.duration<=1800); // 2–30 min
+  if(pts.length<3) return {cp:null, wPrime:null};
+  const xs=pts.map(p=>1/p.duration), ys=pts.map(p=>p.power);
+  const n=xs.length; let sx=0, sy=0, sxx=0, sxy=0; for(let i=0;i<n;i++){ sx+=xs[i]; sy+=ys[i]; sxx+=xs[i]*xs[i]; sxy+=xs[i]*ys[i]; }
+  const denom = n*sxx - sx*sx; if(Math.abs(denom)<1e-9) return {cp:null, wPrime:null};
+  const slope = (n*sxy - sx*sy)/denom; // = W'
+  const intercept = (sy - slope*sx)/n; // = CP
+  return {cp:intercept, wPrime:slope};
+}
+
+// ======== Fueling helpers ========
+function choFractionByCP(fr){ if(!Number.isFinite(fr)) return 0.6; if(fr<=0.60) return 0.35; if(fr<=0.75) return 0.35 + (fr-0.60)*(0.25/0.15); if(fr<=1.00) return 0.60 + (fr-0.75)*(0.25/0.25); return Math.min(1.0, 0.85 + (fr-1.0)*0.30); }
+function capForMode(m){ return m==='G60'?60:(m==='GF90'?90:120); }
+function splitFor(mode, rate){ rate=Math.max(0,rate); if(mode==='G60') return {glu:rate, fru:0}; if(mode==='GF90') return {glu:Math.min(60,rate), fru:Math.max(0, rate-Math.min(60,rate))}; const r=Math.min(120,rate); const glu=Math.min(60, Math.round(r/2)); const fru=r-glu; return {glu, fru}; }
+
+// ======== Timeline chart with glycogen curve ========
+const svg=document.getElementById('chart'); const overlay=document.getElementById('overlay'); const P={left:56,right:56,top:20,bottom:38}; const W=900,H=320; const IW=W-P.left-P.right, IH=H-P.top-P.bottom;
+function clearSVG(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+function add(type, attrs){ const el=document.createElementNS('http://www.w3.org/2000/svg', type); for(const k in attrs){ if(k==='text'){ el.textContent=attrs[k]; } else { el.setAttribute(k, attrs[k]); } } svg.appendChild(el); return el; }
+
+function buildSchedule(durationSec, cadenceMin, startMin){ const times=[]; const step=cadenceMin*60; let t=startMin*60; while(t<=durationSec+1e-6){ times.push(t); t+=step; } return times; }
+
+function simulateGlyCurve(T){
+  const dt=60; // 1 min
+  const watts=state.effW, eff=Math.max(0.01,state.efficiency), frac=state.cp>0?watts/state.cp:0; const fCHO=choFractionByCP(frac);
+  const cho_req_gps = (watts/eff)/4184 * fCHO / 4.0; // g/s
+  const cap_gps = capForMode(state.intakeMode)/3600;
+  const sched = buildSchedule(T,state.cadenceMin,state.startMin);
+  const dose = state.intakeRate*(state.cadenceMin/60); // g per dose
+  const tau = 1200; // 20 min absorption time constant
+  const boluses = sched.map(t=>({t, g:dose}));
+  const times=[], glyc=[];
+  let G=state.glyInit;
+  for(let t=0;t<=T;t+=dt){
+    let rate=0; for(const b of boluses){ if(t>=b.t){ const dtb=t-b.t; rate += (b.g/tau)*Math.exp(-dtb/tau); } }
+    const exo_gps = Math.min(cap_gps, rate);
+    const endo_gps = Math.max(0, cho_req_gps - exo_gps);
+    G = Math.max(0, G - endo_gps*dt);
+    times.push(t); glyc.push(G);
+  }
+  return {times, glyc};
+}
+
+function drawTimeline(){
+  clearSVG();
+  const T=state.effDur; if(!Number.isFinite(T) || T<60){ overlay.style.display='flex'; return; }
+  overlay.style.display = (T<7200) ? 'flex' : 'none';
+
+  // axes
+  add('rect',{x:0,y:0,width:W,height:H,fill:'transparent'});
+  const x=(t)=>P.left + (t/T)*IW;
+  const yDose=(g)=>P.top+IH - (g/60)*IH; // left axis: 0..60 g per block
+
+  // grid x every 30 min
+  const tick=30*60; for(let t=0;t<=T;t+=tick){ const X=x(t); add('line',{x1:X,y1:P.top,x2:X,y2:P.top+IH,stroke:'#293241'}); add('text',{x:X,y:P.top+IH+14,'text-anchor':'middle','font-size':'10',fill:'#b6c2cf',text:fmtDuration(t)}); }
+  // grid y (left)
+  for(let g=0; g<=60; g+=15){ const Y=yDose(g); add('line',{x1:P.left,y1:Y,x2:P.left+IW,y2:Y,stroke:'#293241'}); add('text',{x:P.left-6,y:Y+3,'text-anchor':'end','font-size':'10',fill:'#b6c2cf',text:g+' g'}); }
+  add('text',{x:P.left-10,y:P.top-4,'text-anchor':'end','font-size':'10',fill:'#9bb1c7',text:'Dose size (g)'});
+
+  // Glycogen curve (right axis)
+  const sim = simulateGlyCurve(T);
+  const Gmax = Math.max(state.glyInit, state.glyReserve)*1.05; // headroom
+  const yG=(G)=> P.top+IH - (G/Gmax)*IH;
+  [0, state.glyReserve, state.glyInit].forEach((v,i)=>{
+    const Y=yG(v); add('line',{x1:P.left,y1:Y,x2:P.left+IW,y2:Y,stroke:'#334155','stroke-dasharray': i===0? '': '4 6'});
+    add('text',{x:P.left+IW+6,y:Y+3,'text-anchor':'start','font-size':'10',fill: i===2? '#c7d2fe':'#b6c2cf',text: (i===2? 'Init ' : (i===1? 'Reserve ' : '0 ')) + Math.round(v)+' g'});
+  });
+  add('text',{x:P.left+IW+10,y:P.top-4,'text-anchor':'start','font-size':'10',fill:'#9bb1c7',text:'Muscle glycogen (g)'});
+
+  // shade below reserve
+  const Yres=yG(state.glyReserve); add('rect',{x:P.left,y:Yres,width:IW,height:Math.max(0,P.top+IH-Yres),fill:'rgba(248,113,113,0.10)'});
+
+  // curve
+  if(sim.times.length>1){
+    const d=sim.times.map((t,i)=> (i?'L':'M')+x(t)+','+yG(sim.glyc[i])).join(' ');
+    add('path',{d, fill:'none', stroke:'#22d3ee','stroke-width':3});
+  }
+
+  // doses
+  const cad=state.cadenceMin, start=state.startMin; const sched=buildSchedule(T,cad,start);
+  const split=splitFor(state.intakeMode, state.intakeRate);
+  const doseTotal = state.intakeRate * (cad/60);
+  const doseGlu = split.glu * (cad/60);
+  const doseFru = split.fru * (cad/60);
+
+  sched.forEach(t=>{
+    const X=x(t), bw=Math.max(6, (cad*60/T)*IW*0.75);
+    add('rect',{x:X-bw/2, y:yDose(doseTotal), width:bw, height:Math.max(2, (IH - (yDose(doseTotal)-P.top))), fill:'url(#gradDose)', opacity:0.9});
+    add('text',{x:X, y:yDose(doseTotal)-5, 'text-anchor':'middle', 'font-size':'9', fill:'#e5e7eb', text:`${Math.round(doseTotal)}g`});
+  });
+
+  // gradient defs
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs'); svg.appendChild(defs);
+  const lg=document.createElementNS('http://www.w3.org/2000/svg','linearGradient'); lg.setAttribute('id','gradDose'); lg.setAttribute('x1','0'); lg.setAttribute('x2','0'); lg.setAttribute('y1','0'); lg.setAttribute('y2','1');
+  const s1=document.createElementNS('http://www.w3.org/2000/svg','stop'); s1.setAttribute('offset','0%'); s1.setAttribute('stop-color','#22d3ee'); defs.appendChild(lg); lg.appendChild(s1);
+  const s2=document.createElementNS('http://www.w3.org/2000/svg','stop'); s2.setAttribute('offset','100%'); s2.setAttribute('stop-color','#3b82f6'); lg.appendChild(s2);
+
+  // legend
+  add('text',{x:P.left, y:P.top-4, 'text-anchor':'start', 'font-size':'10', fill:'#cbd5e1', text:`Dose ${Math.round(doseTotal)} g (G ${Math.round(doseGlu)} / F ${Math.round(doseFru)}) every ${cad}′ from ${start}′`});
+}
+
+// ======== Derived + UI ========
+function describeSession({duration, watts, cp, weight}){
+  const frac = cp>0 ? watts/cp : 0; const domain = frac<0.75?"Endurance":(frac<=1.0?"Moderate":"Severe"); const kJkg = weight>0 ? (watts*duration)/1000/weight : NaN; return `Session: ${fmtDuration(duration)} at ${Math.round(watts)} W (${(frac*100).toFixed(0)}% CP). Load ≈ ${fmtKJkg(kJkg)}.`; }
+
+function buildGuideLines(){
+  const T=state.effDur; const cad=state.cadenceMin; const start=state.startMin; const sched=buildSchedule(T,cad,start);
+  const split=splitFor(state.intakeMode,state.intakeRate); const doseTot=state.intakeRate*(cad/60); const doseG=split.glu*(cad/60); const doseF=split.fru*(cad/60);
+  const header=[
+    'Interactive Simulator (Nutrition Planning) — Handlebar Guide',
+    `Author: Gabriel Della Mattia · Produced for AGMT2.TEAM`,
+    `CP ${state.cp} W · Effort ${Math.round(state.effW)} W for ${fmtDuration(state.effDur)} (GE ${Math.round(state.efficiency*100)}%)`,
+    `Mode ${state.intakeMode} · Intake ${Math.round(state.intakeRate)} g/h · Cadence ${cad}′ · Start ${start}′`,
+    `Dose ${Math.round(doseTot)} g (G ${Math.round(doseG)} / F ${Math.round(doseF)})`,
+    '---'
+  ];
+  const lines = sched.map(t=> `${fmtDuration(t)}  —  ${Math.round(doseTot)} g  (G ${Math.round(doseG)}, F ${Math.round(doseF)})`);
+  if(lines.length===0) lines.push('[No doses in the selected duration]');
+  return header.concat(lines);
+}
+
+function exportTXT(){
+  const text = buildGuideLines().join('\n');
+  const blob = new Blob([text], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'handlebar_guide.txt';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+async function copyGuide(){
+  const text = buildGuideLines().join('\n');
+  try{ await navigator.clipboard.writeText(text); alert('Guide copied to clipboard'); }catch(e){ console.warn('Clipboard failed, downloading instead'); exportTXT(); }
+}
+
+function recompute(){
+  // MMP & CP
+  state.mmp = state.rows.length ? buildMMP(state.rows) : [];
+  if(state.mmp.length){ const est=estimateCP(state.mmp); state.cpEst = est.cp; state.wPrime = est.wPrime; if(state.autoCP && Number.isFinite(est.cp)){ state.cp = Math.round(est.cp); document.getElementById('inp-cp').value = state.cp; } }
+  document.getElementById('pill-cp').textContent = (Number.isFinite(state.cpEst)&&Number.isFinite(state.wPrime))?`CP ${Math.round(state.cpEst)} · W′ ${Math.round(state.wPrime)} J`: 'CP ? · W′ ?';
+
+  // Coverage
+  state.dateRange = inferDateRange(state.rows);
+  const cov = state.dateRange ? `Coverage: ${state.dateRange.min.toLocaleDateString()} – ${state.dateRange.max.toLocaleDateString()}` : 'Load your CSV to estimate CP';
+  document.getElementById('lbl-coverage').textContent = cov;
+
+  // Energy calc
+  const frac = state.cp>0 ? state.effW/state.cp : 0; const kJ=(state.effW*state.effDur)/1000; const kJmet=kJ/Math.max(0.01,state.efficiency); const kcal=kJmet/4.184; const kJkg=state.weight>0?kJ/state.weight:NaN; const kcalkg=state.weight>0?kcal/state.weight:NaN;
+  const domain = frac<0.75?'Endurance':(frac<=1.0?'Moderate':'Severe');
+  document.getElementById('pill-domain').textContent = domain; document.getElementById('pill-int').textContent = Math.round(frac*100)+'% CP'; document.getElementById('pill-kjkg').textContent = fmtKJkg(kJkg); document.getElementById('pill-kj').textContent = Math.round(kJ)+' kJ'; document.getElementById('pill-kcal').textContent = Math.round(kcal)+' kcal'; document.getElementById('pill-kcalkg').textContent = Number.isFinite(kcalkg)?kcalkg.toFixed(1)+' kcal/kg':'-'; document.getElementById('lbl-dur').textContent = fmtDuration(state.effDur); document.getElementById('lbl-w').textContent = Math.round(state.effW)+' W'; document.getElementById('lbl-eff').textContent = Math.round(state.efficiency*100)+'%';
+  document.getElementById('txt-session').textContent = describeSession({duration:state.effDur, watts:state.effW, cp:state.cp, weight:state.weight});
+
+  // CHO totals & caps
+  const fCHO=choFractionByCP(frac); const choReq_g=(kcal*fCHO)/4.0; const hrs=Math.max(state.effDur/3600,1e-6); const exo_g=state.intakeRate*hrs; const glyEnd = state.glyInit + exo_g - choReq_g; const need_g=Math.max(0,(choReq_g + state.glyReserve - state.glyInit)); const rec_gph=need_g/hrs; const cap = capForMode(state.intakeMode); state.intakeCap=cap;
+  document.getElementById('pill-cho-req').textContent = `${Math.round(choReq_g)} g total CHO`; document.getElementById('pill-cho-exo').textContent = `${Math.round(exo_g)} g`; document.getElementById('pill-gly-end').textContent = `${Math.round(glyEnd)} g`; document.getElementById('lbl-intake').textContent = Math.round(state.intakeRate)+' g/h'; document.getElementById('lbl-intakecap').textContent = cap;
+  const recTxt = (state.effDur<7200) ? 'For <2 h, fueling is generally optional (unless high intensity/low glycogen).' : (rec_gph<=cap ? `Minimum to avoid dipping reserves: ${Math.max(0,Math.round(rec_gph))} g/h (cap ${cap})` : `Needed ${Math.round(rec_gph)} g/h > cap ${cap}. Adjust intensity or gut‑train.`);
+  document.getElementById('pill-cho-rec').textContent = recTxt; const split=splitFor(state.intakeMode,state.intakeRate); document.getElementById('pill-split').textContent = `Glucose ${Math.round(split.glu)} g/h · Fructose ${Math.round(split.fru)} g/h`;
+
+  // Dosing schedule summary
+  const sched = buildSchedule(state.effDur, state.cadenceMin, state.startMin); const dose = state.intakeRate*(state.cadenceMin/60); const last = sched.length? sched[sched.length-1] : null; document.getElementById('pill-dose').textContent = `${Math.round(dose)} g every ${state.cadenceMin}′`; document.getElementById('pill-dose-n').textContent = String(sched.length); document.getElementById('pill-dose-last').textContent = last? fmtDuration(last) : '-';
+
+  // Slider caps
+  const rng=document.getElementById('rng-intake'); rng.max=String(cap); if(state.intakeRate>cap){ state.intakeRate=cap; rng.value=String(cap);} 
+
+  // Draw
+  drawTimeline();
+}
+
+// ======== Events ========
+const fileInput=document.getElementById('file'); const btnUpload=document.getElementById('btn-upload'); btnUpload.addEventListener('click',()=>fileInput.click()); fileInput.addEventListener('change', async (e)=>{ const f=e.target.files && e.target.files[0]; if(!f) return; const text=await f.text(); state.rows=parseCSVToRows(text); recompute(); });
+
+document.getElementById('btn-export').addEventListener('click', exportTXT);
+
+document.getElementById('btn-copy').addEventListener('click', copyGuide);
+
+document.getElementById('inp-weight').addEventListener('input', e=>{ state.weight=clamp(Number(e.target.value),30,120); recompute(); });
+
+document.getElementById('inp-cp').addEventListener('input', e=>{ state.cp=clamp(Number(e.target.value),120,500); state.autoCP=false; document.getElementById('chk-cp-auto').checked=false; recompute(); });
+
+document.getElementById('chk-cp-auto').addEventListener('change', e=>{ state.autoCP=e.target.checked; recompute(); });
+
+document.getElementById('rng-dur').addEventListener('input', e=>{ state.effDur=Number(e.target.value); if(state.effDur<7200 && state.startMin<120){ state.startMin=120; document.getElementById('sel-start').value='120'; } if(state.effDur>=7200 && state.startMin>=120){ state.startMin=15; document.getElementById('sel-start').value='15'; } recompute(); });
+
+document.getElementById('rng-w').addEventListener('input', e=>{ state.effW=Number(e.target.value); recompute(); });
+
+document.getElementById('rng-eff').addEventListener('input', e=>{ state.efficiency=Number(e.target.value); recompute(); });
+
+document.getElementById('sel-mode').addEventListener('change', e=>{ state.intakeMode=e.target.value; state.intakeCap=capForMode(state.intakeMode); recompute(); });
+
+document.getElementById('rng-intake').addEventListener('input', e=>{ state.intakeRate=Number(e.target.value); recompute(); });
+
+document.getElementById('sel-cad').addEventListener('change', e=>{ state.cadenceMin=Number(e.target.value); recompute(); });
+
+document.getElementById('sel-start').addEventListener('change', e=>{ state.startMin=Number(e.target.value); recompute(); });
+
+// CSV parser (wide/long)
+function parseCSVToRows(text){ const lines=text.split(/\r?\n/).filter(l=>l.trim().length>0); if(!lines.length) return []; lines[0]=lines[0].replace(/^\ufeff/,""); const SEP=/[;\,\t]/; const header=lines[0].split(SEP).map(c=>c.trim()); const lower=header.map(h=>h.toLowerCase()); const isWide=lower.some(h=>/^m\d+$/.test(h)); if(isWide){ const idxFecha=Math.max(0, lower.findIndex(h=>/fecha|date/.test(h))); const durCols=header.map((h,i)=>{ const m=/^m(\d+)$/.exec(h.trim().toLowerCase()); return m?{i,sec:Number(m[1])}:null; }).filter(Boolean); const rows=[]; for(let r=1;r<lines.length;r++){ const cols=lines[r].split(SEP).map(c=>c.trim()); if(cols.length<header.length) continue; const fecha=cols[idxFecha]||""; for(const d of durCols){ const val=String(cols[d.i]??"").trim(); if(!val) continue; const pow=Number(val.replace(/[^0-9.\-]/g,"")); if(Number.isFinite(pow)) rows.push({fecha,dur_s:d.sec,power:pow}); } } return rows; } let start=0, idxF=0, idxD=1, idxP=2; if (/(fecha|date|duraci|duration|poten|power)/i.test(header.join(" "))){ idxF=Math.max(0,lower.findIndex(c=>/fecha|date/.test(c))); idxD=Math.max(0,lower.findIndex(c=>/durac|dur|duration/.test(c))); idxP=Math.max(0,lower.findIndex(c=>/poten|power|w\b/.test(c))); if(idxF<0) idxF=0; if(idxD<0) idxD=1; if(idxP<0) idxP=2; start=1; } function parseDurationToken(tok){ if(!tok) return NaN; const t=String(tok).trim().toLowerCase().replace(/\s+/g,""); if(!t) return NaN; if(t.startsWith("m") && /^m\d+(\.\d+)?$/.test(t)) return Number(t.slice(1)); if(t.startsWith("s") && /^s\d+(\.\d+)?$/.test(t)) return Number(t.slice(1)); if(t.includes(":")){ const parts=t.split(":").map(Number); if(parts.some(x=>!Number.isFinite(x))) return NaN; if(parts.length===3){const[hh,mm,ss]=parts; return hh*3600+mm*60+ss;} if(parts.length===2){const[mm,ss]=parts; return mm*60+ss;} } if(/\d+h/.test(t)||/\d+m/.test(t)||/\d+s/.test(t)){ const hh=Number((t.match(/(\d+)h/)||[])[1]||0); const mm=Number((t.match(/(\d+)m/)||[])[1]||0); const ss=Number((t.match(/(\d+)s/)||[])[1]||0); return hh*3600+mm*60+ss;} const n=Number(t.replace(/[^0-9.\-]/g,"")); return Number.isFinite(n)?n:NaN; } function parsePowerToken(tok){ if(!tok) return NaN; const n=Number(String(tok).replace(/[^0-9.\-]/g,"")); return Number.isFinite(n)?n:NaN; } const rows=[]; for(let i=start;i<lines.length;i++){ const cols=lines[i].split(SEP).map(c=>c.trim()); if(cols.length<3) continue; const fecha=cols[idxF]??""; const dur=parseDurationToken(cols[idxD]); const pow=parsePowerToken(cols[idxP]); if(Number.isFinite(dur)&&Number.isFinite(pow)) rows.push({fecha,dur_s:dur,power:pow}); } return rows; }
+
+// ======== Tests ========
+(function runTests(){ try{ const required=['inp-weight','inp-cp','chk-cp-auto','btn-upload','file','chart','overlay','rng-dur','rng-w','rng-eff','lbl-dur','lbl-w','lbl-eff','pill-cp','sel-cad','sel-start','rng-intake','sel-mode','btn-export','btn-copy']; const missing=required.filter(id=>!document.getElementById(id)); console.assert(missing.length===0,'Missing elements:',missing); const sched=buildSchedule(3600,15,15); console.assert(sched.length===3,'1h/15′ from 15′ should yield 3 doses'); console.log('%cBasic tests OK','color:lightgreen'); }catch(e){ console.error('Tests failed',e);} })();
+
+// init
+recompute();
+</script>
+</body>
+</html>
