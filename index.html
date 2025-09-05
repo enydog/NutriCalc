@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Interactive Simulator (Nutrition Planning) — CP · kJ/kg · CHO</title>
   <style>
-    /* Modern theme */
     :root{
       --bg1:#0b1220; --bg2:#0f172a; --bg3:#1e293b;
-      --card:#0f172a; --card2:#111827; --ink:#e5e7eb; --muted:#94a3b8;
-      --border:#22314b; --accent:#22d3ee; --accent2:#a78bfa; --ok:#34d399; --warn:#fbbf24; --bad:#f87171;
+      --card:#0f172a; --ink:#e5e7eb; --muted:#94a3b8;
+      --border:#22314b; --accent:#22d3ee; --accent2:#a78bfa;
+      --logo-url: url('logo.png');
     }
     *{box-sizing:border-box}
     body{margin:0;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
@@ -24,6 +24,7 @@
     .card{background:linear-gradient(180deg,rgba(17,24,39,.9),rgba(17,24,39,.85));border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .row-tight{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
     .label{font-size:11px;color:#a3b2c7;margin-bottom:2px}
     .ibox{display:flex;align-items:center;gap:8px;border:1px solid var(--border);padding:6px 8px;border-radius:10px;background:rgba(2,6,23,.6)}
     input[type=number]{width:100%;border:0;outline:0;font-size:13px;color:var(--ink);background:transparent}
@@ -33,26 +34,18 @@
     .pill .t{font-size:10px;color:#9aa6b2}
     .pill .v{font-weight:700}
     .btn{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#0b1220;border:0;border-radius:10px;padding:6px 10px;font-size:12px;cursor:pointer}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-    .chips{display:flex;flex-wrap:wrap;gap:6px}
-    .chip{border:1px solid var(--border);background:rgba(2,6,23,.6);border-radius:999px;padding:4px 8px;font-size:11px;cursor:pointer}
-    .hint{color:#8ea0b5;font-size:11px}
     .chart-wrap{width:100%;height:320px;position:relative}
     .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#cbd5e1;border:1px dashed rgba(255,255,255,.08);border-radius:10px;background:linear-gradient(180deg, rgba(2,6,23,.55), rgba(2,6,23,.30));padding:8px}
     svg{width:100%;height:100%}
-    /* watermark + icons */
     .chart-wrap{position:relative}
     .chart-wrap::before{content:"";position:absolute;inset:0;background-repeat:no-repeat;background-position:calc(100% - 12px) 12px;background-size:120px auto;opacity:.12;filter:saturate(1.05);pointer-events:none;z-index:0;background-image:var(--logo-url)}
     .chart-wrap svg{position:relative;z-index:1}
     .overlay{z-index:2}
     .overlay .ovl{max-width:560px;text-align:center;line-height:1.25;text-shadow:0 1px 2px rgba(0,0,0,.45)}
     .overlay .ovl-strong{font-size:20px;font-weight:800;letter-spacing:.2px;color:#e5e7eb;margin:2px 0 4px}
-    .overlay .ovl-line{font-size:13px;color:#cbd5e1;opacity:.95}
-    .overlay .ovl-sub{font-size:12px;color:#9fb2c7;opacity:.95}
-    .btn .ico{display:inline-block;width:14px;height:14px;background-image:var(--logo-url);background-size:cover;background-repeat:no-repeat;border-radius:3px;vertical-align:-2px;margin-right:6px;box-shadow:0 1px 2px rgba(0,0,0,.35)}
-    .row-tight{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .overlay .ovl-line{font-size:13px;color:#cbd5e1}
+    .overlay .ovl-sub{font-size:12px;color:#9fb2c7}
     .toolbar{display:flex;gap:8px;align-items:center}
-      /* brand header */
     .brand{display:flex;align-items:center;gap:10px;margin-bottom:6px}
     .brand img.logo{height:40px;width:auto;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.35)}
     @media (max-width:480px){.brand img.logo{height:32px}}
@@ -64,57 +57,35 @@
   <div class="brand"><img class="logo" src="logo.png" alt="Logo" onerror="this.style.display='none'"/><div><h1>Interactive Simulator (Nutrition Planning)</h1><p class="muted">Author: <b>Gabriel Della Mattia</b> · Produced for <b>AGMT2.TEAM</b></p></div></div>
 
   <div class="grid" style="margin-top:8px">
-    <!-- Left column (compact controls) -->
+    <!-- Left column -->
     <div>
       <div class="card">
         <div class="row-tight">
           <label>
             <div class="label">Weight</div>
             <div class="ibox">
-              <input id="inp-weight" type="number" min="30" max="120" step="0.1" value="72"/>
+              <input id="inp-weight" type="number" min="30" max="120" step="0.1" value="68"/>
               <span class="hint">kg</span>
             </div>
           </label>
           <label>
-            <div class="label">CP (W) <span class="hint">(auto from MMP)</span></div>
+            <div class="label">CP (W) <span class="muted">(auto from MMP)</span></div>
             <div class="ibox">
-              <input id="inp-cp" type="number" min="120" max="500" step="1" value="250"/>
-              <span class="hint">W</span>
+              <input id="inp-cp" type="number" min="120" max="500" step="1" value="274"/>
+              <span class="muted">W</span>
             </div>
           </label>
-          <label>
-            <div class="label">Auto‑CP from MMP</div>
-            <div class="ibox" style="justify-content:space-between">
-              <span class="hint">Use CP estimated on CSV load</span>
-              <input id="chk-cp-auto" type="checkbox" checked/>
-            </div>
-          </label>
-        </div>
-        <div class="pill" style="margin-top:8px;max-width:340px">
-          <div class="t">Estimation</div>
-          <div class="v" id="pill-cp">CP ? · W′ ?</div>
-        </div>
-
-        <div class="row-tight" id="row-manualmix" style="margin-top:6px;align-items:center;gap:12px">
-          <label style="display:flex;align-items:center;gap:6px">
-            <input type="checkbox" id="chk-manualmix">
-            <span class="label" style="margin:0">Manual fuel mix (what‑if)</span>
-          </label>
-          <label style="flex:1">
-            <div class="label">% Fat (what‑if)</div>
-            <input type="range" id="rng-fat" min="0" max="95" step="1" value="60" disabled>
-          </label>
-          <div class="pill" style="min-width:120px">
-            <div class="t">Manual</div>
-            <div class="v" id="pill-manualmix">off</div>
+          <div class="pill" style="display:flex;flex-direction:column;justify-content:center">
+            <div class="t">Estimation</div><div class="v" id="pill-cp">CP 250 · W′ ?</div>
           </div>
         </div>
 
+        <!-- Athlete + mix display -->
         <div class="row-tight" style="margin-top:6px">
           <label>
             <div class="label">Athlete type</div>
             <select id="sel-athlete">
-              <option value="trained">Well‑trained</option>
+              <option value="trained">Well-trained</option>
               <option value="moderate" selected>Moderately trained</option>
               <option value="untrained">Low trained</option>
             </select>
@@ -123,10 +94,25 @@
           <div class="pill"><div class="t">Peak fat</div><div class="v" id="pill-fatpeak">-</div></div>
         </div>
 
+        <!-- Manual mix HERE (what-if) -->
+        <div class="row-tight" style="margin-top:6px;align-items:center">
+          <label style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="chk-manualmix">
+            <span class="label" style="margin:0">Manual fuel mix (what-if)</span>
+          </label>
+          <label style="flex:1">
+            <div class="label">% Fat (what-if)</div>
+            <input type="range" id="rng-fat" min="0" max="95" step="1" value="60" disabled>
+          </label>
+          <div class="pill" style="min-width:110px">
+            <div class="t">Manual</div><div class="v" id="pill-manualmix">off</div>
+          </div>
+        </div>
+
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
           <div>
             <div style="font-size:13px;font-weight:600">Power Curves (CSV)</div>
-            <div class="hint">Wide m1..m18000 or long (Date, Duration, Power). &lt;60 s filtered.</div>
+            <div class="muted">Wide m1..m18000 or long (Date, Duration, Power). &lt;60 s filtered.</div>
           </div>
           <div class="toolbar">
             <button id="btn-upload" class="btn">Upload CSV</button>
@@ -140,11 +126,11 @@
         <div class="row-tight">
           <label>
             <div class="label">Duration <b id="lbl-dur">60:00</b></div>
-            <input id="rng-dur" type="range" min="60" max="21600" step="15" value="3600"/>
+            <input id="rng-dur" type="range" min="3600" max="43200" step="60" value="3600"/>
           </label>
           <label>
-            <div class="label">Power <b id="lbl-w">250 W</b></div>
-            <input id="rng-w" type="range" min="50" max="800" step="5" value="250"/>
+            <div class="label">Power <b id="lbl-w">194 W</b></div>
+            <input id="rng-w" type="range" min="50" max="800" step="5" value="194"/>
           </label>
           <label>
             <div class="label">Gross eff. <b id="lbl-eff">24%</b></div>
@@ -152,40 +138,10 @@
           </label>
         </div>
 
-        <div class="row-tight" id="row-manualmix" style="margin-top:6px;align-items:center;gap:12px">
-          <label style="display:flex;align-items:center;gap:6px">
-            <input type="checkbox" id="chk-manualmix">
-            <span class="label" style="margin:0">Manual fuel mix (what‑if)</span>
-          </label>
-          <label style="flex:1">
-            <div class="label">% Fat (what‑if)</div>
-            <input type="range" id="rng-fat" min="0" max="95" step="1" value="60" disabled>
-          </label>
-          <div class="pill" style="min-width:120px">
-            <div class="t">Manual</div>
-            <div class="v" id="pill-manualmix">off</div>
-          </div>
-        </div>
-
         <div class="row-tight" style="margin-top:6px">
           <div class="pill"><div class="t">Domain</div><div class="v" id="pill-domain">-</div></div>
           <div class="pill"><div class="t">Intensity</div><div class="v" id="pill-int">-</div></div>
           <div class="pill"><div class="t">kJ/kg</div><div class="v" id="pill-kjkg">-</div></div>
-        </div>
-
-        <div class="row-tight" id="row-manualmix" style="margin-top:6px;align-items:center;gap:12px">
-          <label style="display:flex;align-items:center;gap:6px">
-            <input type="checkbox" id="chk-manualmix">
-            <span class="label" style="margin:0">Manual fuel mix (what‑if)</span>
-          </label>
-          <label style="flex:1">
-            <div class="label">% Fat (what‑if)</div>
-            <input type="range" id="rng-fat" min="0" max="95" step="1" value="60" disabled>
-          </label>
-          <div class="pill" style="min-width:120px">
-            <div class="t">Manual</div>
-            <div class="v" id="pill-manualmix">off</div>
-          </div>
         </div>
 
         <div class="row-tight" style="margin-top:6px">
@@ -198,21 +154,21 @@
       <div class="card" style="margin-top:8px">
         <div style="font-size:13px;font-weight:600;margin-bottom:4px">Didactic text</div>
         <div id="txt-session" style="color:#e5e7eb"></div>
-        <div class="hint" style="margin-top:6px">kJ/kg = (W·s)/1000/kg. Fuel mix shifts with intensity and training; trained athletes oxidize more fat at a given %CP.</div>
+        <div class="muted" style="margin-top:6px">kJ/kg = (W·s)/1000/kg. Fuel mix shifts with intensity and training; trained athletes oxidize more fat at a given %CP.</div>
       </div>
     </div>
 
-    <!-- Right column: timeline + CHO strategy below (to reduce scroll) -->
+    <!-- Right column -->
     <div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <div style="font-size:13px;font-weight:600">Ingestion timeline & muscle glycogen</div>
           <div class="toolbar">
-            <button id="btn-copy" class="btn" title="Copy handlebar guide"><span class="ico"></span>Copy guide</button>
-            <button id="btn-export" class="btn" title="Download TXT"><span class="ico"></span>Export TXT</button>
+            <button id="btn-copy" class="btn" title="Copy handlebar guide">Copy guide</button>
+            <button id="btn-export" class="btn" title="Download TXT">Export TXT</button>
           </div>
         </div>
-        <div class="hint" id="lbl-coverage" style="margin-bottom:6px">Load your CSV to estimate CP</div>
+        <div class="muted" id="lbl-coverage" style="margin-bottom:6px">Load your CSV to estimate CP</div>
         <div class="chart-wrap">
           <div class="overlay" id="overlay"><div class="ovl"><div class="ovl-line">Fueling is generally</div><div class="ovl-strong">NOT REQUIRED &lt; 2 h</div><div class="ovl-sub">unless high intensity or low glycogen</div><div class="ovl-sub">Increase duration to see the schedule</div></div></div>
           <svg id="chart" viewBox="0 0 900 320" preserveAspectRatio="none"></svg>
@@ -224,17 +180,16 @@
         </div>
       </div>
 
-      <!-- CHO strategy moved below timeline -->
       <div class="card" style="margin-top:8px">
         <div style="font-size:13px;font-weight:600;margin-bottom:6px">Carbohydrate strategy (stores + intake)</div>
         <div class="row">
           <label>
             <div class="label">Initial glycogen</div>
-            <div class="ibox"><input id="inp-glyinit" type="number" min="100" max="800" step="10" value="400"/><span class="hint">g</span></div>
+            <div class="ibox"><input id="inp-glyinit" type="number" min="100" max="800" step="10" value="400"/><span class="muted">g</span></div>
           </label>
           <label>
             <div class="label">Reserve to keep</div>
-            <div class="ibox"><input id="inp-glyres" type="number" min="0" max="200" step="10" value="100"/><span class="hint">g</span></div>
+            <div class="ibox"><input id="inp-glyres" type="number" min="0" max="800" step="10" value="100"/><span class="muted">g</span></div>
           </label>
         </div>
         <div class="row" style="margin-top:6px">
@@ -243,7 +198,7 @@
             <select id="sel-mode">
               <option value="G60">Glucose (SGLT1) · ≤60 g/h</option>
               <option value="GF90" selected>Glucose+Fructose (2:1) · ≤90 g/h</option>
-              <option value="GF120">High (1:1, gut‑trained) · ≤120 g/h</option>
+              <option value="GF120">High (1:1, gut-trained) · ≤120 g/h</option>
             </select>
           </label>
           <label>
@@ -283,7 +238,7 @@
         <div class="row" style="margin-top:6px">
           <div class="pill" style="grid-column:1 / -1"><div class="t">Split</div><div class="v" id="pill-split">-</div></div>
         </div>
-        <div class="hint" style="margin-top:6px">Frequent small boluses (10–15′) aid tolerance & oxidation. 2:1 for ~90 g/h; 1:1 with gut training for ~120 g/h.</div>
+        <div class="muted" style="margin-top:6px">Frequent small boluses (10–15′) aid tolerance & oxidation. 2:1 for ~90 g/h; 1:1 with gut training for ~120 g/h.</div>
       </div>
     </div>
   </div>
@@ -292,335 +247,200 @@
 </div>
 
 <script>
-// ======== State ========
-// set CSS var with logo URL (used for watermark & badges)
-(function(){
-  try{
-    const url = 'logo.png';
-    // set CSS var for watermark/buttons
-    document.documentElement.style.setProperty('--logo-url', `url('${url}')`);
-    // ensure header logo uses the runtime file
-    const logo = document.querySelector('.logo');
-    if (logo) { logo.src = url; }
-  }catch(e){ console.warn('Logo CSS var not set', e); }
-})();
-const state = {
-  weight: 72,
-  cp: 250,
-  rows: [],
-  effDur: 3600,
-  effW: 250,
-  mmp: [],
-  dateRange: null,
-  efficiency: 0.24,
-  athleteType: "moderate",
-  manualMix: { enabled:false, fat:0.60 },
-  // Fueling
-  glyInit: 400,
-  glyReserve: 100,
-  intakeMode: 'GF90',
-  intakeCap: 90,
-  intakeRate: 60,
-  cadenceMin: 15,
-  startMin: 120, // default obeying <2h rule
-  autoCP: true,
-  cpEst: null,
-  wPrime: null,
+/* ---------- helpers + state ---------- */
+const $ = s => document.querySelector(s);
+const fmt2 = n => n.toString().padStart(2,'0');
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const fmtDur = s => {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = Math.floor(s % 60);
+  // Si es <1h muestra m:ss, si no h:mm:ss
+  return h ? `${h}:${fmt2(m)}:${fmt2(sec)}` : `${m}:${fmt2(sec)}`;
 };
 
-// ======== Utils ========
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function fmtDuration(sec){ if(!Number.isFinite(sec)) return "-"; const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=Math.round(sec%60); if(h>0)return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; return `${m}:${String(s).padStart(2,'0')}`; }
-function fmtKJkg(x){ return Number.isFinite(x)?`${x.toFixed(2)} kJ/kg`:"-"; }
-function inferDateRange(rows){ const ts=rows.map(r=>r.fecha).filter(Boolean).map(d=>{ const [dd,mm,yyyy]=String(d).split(/[\/-]/).map(Number); if(!yyyy||!mm||!dd) return null; return new Date(yyyy,mm-1,dd).getTime(); }).filter(t=>Number.isFinite(t)); if(!ts.length) return null; return {min:new Date(Math.min(...ts)),max:new Date(Math.max(...ts))}; }
-function monotonicEnvelopeByDuration(points){ let prev=Infinity; return points.map(d=>{ const v=Math.min(d.power,prev); prev=v; return {...d, power_env:v}; }); }
+const state = { weight:68, cp:274, power:194, eff:0.24, athlete:'moderate',
+  glyInit:400, glyReserve:100, intakeMode:'GF90', intake:60, cadence:15, startMin:120, dur:3600 };
 
-function buildMMP(rows){ const map=new Map(); for(const r of rows){ if(r.dur_s<60) continue; const key=r.dur_s; map.set(key, Math.max(map.get(key)||-Infinity, r.power)); } const list=Array.from(map.entries()).map(([dur_s,power])=>({duration:+dur_s,power:+power})).sort((a,b)=>a.duration-b.duration); return monotonicEnvelopeByDuration(list).map(d=>({duration:d.duration,power:d.power_env})); }
+/* ---------- UI wiring ---------- */
+function wireInputs(){
+  $('#rng-w').addEventListener('input', e=>{ state.power=+e.target.value; $('#lbl-w').textContent=`${state.power} W`; recompute(); });
+  $('#rng-eff').addEventListener('input', e=>{ state.eff=+e.target.value; $('#lbl-eff').textContent=`${Math.round(state.eff*100)}%`; recompute(); });
+  $('#rng-dur').addEventListener('input', e=>{ state.dur=+e.target.value; $('#lbl-dur').textContent=fmtDur(state.dur); recompute(); });
+  $('#inp-weight').addEventListener('input', e=>{ state.weight=+e.target.value||72; recompute(); });
+  $('#inp-cp').addEventListener('input', e=>{ state.cp=+e.target.value||250; $('#pill-cp').textContent=`CP ${state.cp} · W′ ?`; recompute(); });
 
-// ======== CP estimator (P = W'/t + CP) ========
-function estimateCP(mmp){
-  const pts = mmp.filter(p=>p.duration>=120 && p.duration<=1800); // 2–30 min
-  if(pts.length<3) return {cp:null, wPrime:null};
-  const xs=pts.map(p=>1/p.duration), ys=pts.map(p=>p.power);
-  const n=xs.length; let sx=0, sy=0, sxx=0, sxy=0; for(let i=0;i<n;i++){ sx+=xs[i]; sy+=ys[i]; sxx+=xs[i]*xs[i]; sxy+=xs[i]*ys[i]; }
-  const denom = n*sxx - sx*sx; if(Math.abs(denom)<1e-9) return {cp:null, wPrime:null};
-  const slope = (n*sxy - sx*sy)/denom; // = W'
-  const intercept = (sy - slope*sx)/n; // = CP
-  return {cp:intercept, wPrime:slope};
-}
+  // Manual mix HERE
+  const chk=$('#chk-manualmix'), rng=$('#rng-fat'), tag=$('#pill-manualmix');
+  chk.addEventListener('change', ()=>{ rng.disabled=!chk.checked; tag.textContent=chk.checked?`${rng.value}% fat`:'off'; recompute(); });
+  rng.addEventListener('input', ()=>{ tag.textContent=`${rng.value}% fat`; recompute(); });
 
-// ======== Fueling helpers ========
+  // Glycogen controls
+  $('#inp-glyinit').addEventListener('input', e=>{ state.glyInit=clamp(+e.target.value||400,100,800); if(state.glyReserve>state.glyInit) state.glyReserve=state.glyInit; recompute(); });
+  $('#inp-glyres').addEventListener('input', e=>{ state.glyReserve=clamp(+e.target.value||100,0,200); if(state.glyReserve>state.glyInit) state.glyReserve=state.glyInit; recompute(); });
 
-// ======== Fuel-mix model (fat vs CHO) ========
-// Parametrized by training status; intensities expressed as fraction of CP (proxy for %MLSS/%FTP)
-const ATH = {
-  trained:   {peak_x:0.65, peak_y:0.70, low:0.50, high_x:1.05, high_y:0.02, a:1.2, b:2.5},
-  moderate:  {peak_x:0.55, peak_y:0.60, low:0.45, high_x:1.00, high_y:0.02, a:1.2, b:2.2},
-  untrained: {peak_x:0.50, peak_y:0.50, low:0.40, high_x:0.95, high_y:0.01, a:1.2, b:2.0},
-};
-
-function fatFractionByRelIntensity(fr, type){
-  if(!Number.isFinite(fr)) return 0.5;
-  const P = ATH[type] || ATH.moderate;
-  const x = Math.max(0, fr);
-  const a = P.a, b = P.b;
-  // rise to peak (power law)
-  let fat;
-  if(x <= P.peak_x){
-    const r = P.peak_x>0? (x / P.peak_x) : 0;
-    fat = P.low + (P.peak_y - P.low) * Math.pow(Math.max(0, Math.min(1, r)), a);
-  } else {
-    // fall from peak to near-zero at high_x
-    const r = P.high_x> P.peak_x ? (x - P.peak_x) / (P.high_x - P.peak_x) : 1;
-    fat = Math.max(P.high_y, P.peak_y * Math.max(0, 1 - Math.pow(Math.max(0, Math.min(1, r)), b)));
-    if(x >= P.high_x) fat = P.high_y;
-  }
-  return clamp(fat, 0, 0.95);
-}
-
-function fuelMix(fr, type){
-  const fFat = fatFractionByRelIntensity(fr, type);
-  const fCHO = clamp(1 - fFat, 0.05, 0.98); // ignore protein
-  return { fFat, fCHO };
-}
-
-
-function getFuelMix(frac){
-  if(state.manualMix && state.manualMix.enabled){
-    const fFat = clamp(state.manualMix.fat, 0, 0.95);
-    const fCHO = clamp(1 - fFat, 0.05, 0.98);
-    return { fFat, fCHO, manual:true };
-  }
-  const m = fuelMix(frac, state.athleteType);
-  return { fFat:m.fFat, fCHO:m.fCHO, manual:false };
-}
-
-
-function choFractionByCP(fr){ if(!Number.isFinite(fr)) return 0.6; if(fr<=0.60) return 0.35; if(fr<=0.75) return 0.35 + (fr-0.60)*(0.25/0.15); if(fr<=1.00) return 0.60 + (fr-0.75)*(0.25/0.25); return Math.min(1.0, 0.85 + (fr-1.0)*0.30); }
-function capForMode(m){ return m==='G60'?60:(m==='GF90'?90:120); }
-function splitFor(mode, rate){ rate=Math.max(0,rate); if(mode==='G60') return {glu:rate, fru:0}; if(mode==='GF90') return {glu:Math.min(60,rate), fru:Math.max(0, rate-Math.min(60,rate))}; const r=Math.min(120,rate); const glu=Math.min(60, Math.round(r/2)); const fru=r-glu; return {glu, fru}; }
-
-// ======== Timeline chart with glycogen curve ========
-const svg=document.getElementById('chart'); const overlay=document.getElementById('overlay'); const P={left:56,right:56,top:20,bottom:38}; const W=900,H=320; const IW=W-P.left-P.right, IH=H-P.top-P.bottom;
-function clearSVG(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
-function add(type, attrs){ const el=document.createElementNS('http://www.w3.org/2000/svg', type); for(const k in attrs){ if(k==='text'){ el.textContent=attrs[k]; } else { el.setAttribute(k, attrs[k]); } } svg.appendChild(el); return el; }
-
-function buildSchedule(durationSec, cadenceMin, startMin){ const times=[]; const step=cadenceMin*60; let t=startMin*60; while(t<=durationSec+1e-6){ times.push(t); t+=step; } return times; }
-
-function simulateGlyCurve(T){
-  const dt=60; // 1 min
-  const watts=state.effW, eff=Math.max(0.01,state.efficiency), frac=state.cp>0?watts/state.cp:0; const mix=getFuelMix(frac); const fCHO=mix.fCHO;
-  const cho_req_gps = (watts/eff)/4184 * fCHO / 4.0; // g/s
-  const cap_gps = capForMode(state.intakeMode)/3600;
-  const sched = buildSchedule(T,state.cadenceMin,state.startMin);
-  const dose = state.intakeRate*(state.cadenceMin/60); // g per dose
-  const tau = 1200; // 20 min absorption time constant
-  const boluses = sched.map(t=>({t, g:dose}));
-  const times=[], glyc=[];
-  let G=state.glyInit;
-  for(let t=0;t<=T;t+=dt){
-    let rate=0; for(const b of boluses){ if(t>=b.t){ const dtb=t-b.t; rate += (b.g/tau)*Math.exp(-dtb/tau); } }
-    const exo_gps = Math.min(cap_gps, rate);
-    const endo_gps = Math.max(0, cho_req_gps - exo_gps);
-    G = Math.max(0, G - endo_gps*dt);
-    times.push(t); glyc.push(G);
-  }
-  return {times, glyc};
-}
-
-function drawTimeline(){
-  clearSVG();
-  const T=state.effDur; if(!Number.isFinite(T) || T<60){ overlay.style.display='flex'; return; }
-  overlay.style.display = (T<7200) ? 'flex' : 'none';
-
-  // axes
-  add('rect',{x:0,y:0,width:W,height:H,fill:'transparent'});
-  const x=(t)=>P.left + (t/T)*IW;
-  const yDose=(g)=>P.top+IH - (g/60)*IH; // left axis: 0..60 g per block
-
-  // grid x every 30 min
-  const tick=30*60; for(let t=0;t<=T;t+=tick){ const X=x(t); add('line',{x1:X,y1:P.top,x2:X,y2:P.top+IH,stroke:'#293241'}); add('text',{x:X,y:P.top+IH+14,'text-anchor':'middle','font-size':'10',fill:'#b6c2cf',text:fmtDuration(t)}); }
-  // grid y (left)
-  for(let g=0; g<=60; g+=15){ const Y=yDose(g); add('line',{x1:P.left,y1:Y,x2:P.left+IW,y2:Y,stroke:'#293241'}); add('text',{x:P.left-6,y:Y+3,'text-anchor':'end','font-size':'10',fill:'#b6c2cf',text:g+' g'}); }
-  add('text',{x:P.left-10,y:P.top-4,'text-anchor':'end','font-size':'10',fill:'#9bb1c7',text:'Dose size (g)'});
-
-  // Glycogen curve (right axis)
-  const sim = simulateGlyCurve(T);
-  const Gmax = Math.max(state.glyInit, state.glyReserve)*1.05; // headroom
-  const yG=(G)=> P.top+IH - (G/Gmax)*IH;
-  [0, state.glyReserve, state.glyInit].forEach((v,i)=>{
-    const Y=yG(v); add('line',{x1:P.left,y1:Y,x2:P.left+IW,y2:Y,stroke:'#334155','stroke-dasharray': i===0? '': '4 6'});
-    add('text',{x:P.left+IW+6,y:Y+3,'text-anchor':'start','font-size':'10',fill: i===2? '#c7d2fe':'#b6c2cf',text: (i===2? 'Init ' : (i===1? 'Reserve ' : '0 ')) + Math.round(v)+' g'});
+  $('#sel-mode').addEventListener('change', e=>{
+    state.intakeMode=e.target.value;
+    const cap=state.intakeMode==='G60'?60:(state.intakeMode==='GF120'?120:90);
+    $('#lbl-intakecap').textContent=cap; $('#rng-intake').max=cap;
+    state.intake=Math.min(state.intake,cap); $('#rng-intake').value=state.intake; $('#lbl-intake').textContent=`${state.intake} g/h`; recompute();
   });
-  add('text',{x:P.left+IW+10,y:P.top-4,'text-anchor':'start','font-size':'10',fill:'#9bb1c7',text:'Muscle glycogen (g)'});
+  $('#rng-intake').addEventListener('input', e=>{ state.intake=+e.target.value; $('#lbl-intake').textContent=`${state.intake} g/h`; recompute(); });
+  $('#sel-cad').addEventListener('change', e=>{ state.cadence=+e.target.value; recompute(); });
+  $('#sel-start').addEventListener('change', e=>{ state.startMin=+e.target.value; recompute(); });
+  $('#sel-athlete').addEventListener('change', e=>{ state.athlete=e.target.value; recompute(); });
 
-  // shade below reserve
-  const Yres=yG(state.glyReserve); add('rect',{x:P.left,y:Yres,width:IW,height:Math.max(0,P.top+IH-Yres),fill:'rgba(248,113,113,0.10)'});
+  window.addEventListener('resize', recompute);
+}
 
-  // curve
-  if(sim.times.length>1){
-    const d=sim.times.map((t,i)=> (i?'L':'M')+x(t)+','+yG(sim.glyc[i])).join(' ');
-    add('path',{d, fill:'none', stroke:'#22d3ee','stroke-width':3});
+/* ---------- fuel mix ---------- */
+function fuelMix(power, cp, athlete){
+  // manual what-if
+  if ($('#chk-manualmix').checked){
+    const fatFrac=clamp((+$('#rng-fat').value)/100,0,0.95);
+    return {fatFrac, choFrac:1-fatFrac, peakFat:'manual'};
   }
-
-  // doses
-  const cad=state.cadenceMin, start=state.startMin; const sched=buildSchedule(T,cad,start);
-  const split=splitFor(state.intakeMode, state.intakeRate);
-  const doseTotal = state.intakeRate * (cad/60);
-  const doseGlu = split.glu * (cad/60);
-  const doseFru = split.fru * (cad/60);
-
-  sched.forEach(t=>{
-    const X=x(t), bw=Math.max(6, (cad*60/T)*IW*0.75);
-    add('rect',{x:X-bw/2, y:yDose(doseTotal), width:bw, height:Math.max(2, (IH - (yDose(doseTotal)-P.top))), fill:'url(#gradDose)', opacity:0.9});
-    add('text',{x:X, y:yDose(doseTotal)-5, 'text-anchor':'middle', 'font-size':'9', fill:'#e5e7eb', text:`${Math.round(doseTotal)}g`});
-  });
-
-  // gradient defs
-  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs'); svg.appendChild(defs);
-  const lg=document.createElementNS('http://www.w3.org/2000/svg','linearGradient'); lg.setAttribute('id','gradDose'); lg.setAttribute('x1','0'); lg.setAttribute('x2','0'); lg.setAttribute('y1','0'); lg.setAttribute('y2','1');
-  const s1=document.createElementNS('http://www.w3.org/2000/svg','stop'); s1.setAttribute('offset','0%'); s1.setAttribute('stop-color','#22d3ee'); defs.appendChild(lg); lg.appendChild(s1);
-  const s2=document.createElementNS('http://www.w3.org/2000/svg','stop'); s2.setAttribute('offset','100%'); s2.setAttribute('stop-color','#3b82f6'); lg.appendChild(s2);
-
-  // legend
-  add('text',{x:P.left, y:P.top-4, 'text-anchor':'start', 'font-size':'10', fill:'#cbd5e1', text:`Dose ${Math.round(doseTotal)} g (G ${Math.round(doseGlu)} / F ${Math.round(doseFru)}) every ${cad}′ from ${start}′`});
+  // model
+  const r = clamp(power/Math.max(1,cp), 0, 1.3);
+  const base=(athlete==='trained')?0.75:(athlete==='moderate')?0.62:0.52;
+  const slope=(athlete==='trained')?1.10:(athlete==='moderate')?1.05:1.00;
+  const fatFrac = clamp( base / (1 + Math.exp(6*(r-0.75))) * slope , 0.05, 0.85 );
+  return {fatFrac, choFrac:1-fatFrac, peakFat:`${Math.round(base*100)}%`};
 }
 
-// ======== Derived + UI ========
-function describeSession({duration, watts, cp, weight}){
-  const frac = cp>0 ? watts/cp : 0; const domain = frac<0.75?"Endurance":(frac<=1.0?"Moderate":"Severe"); const kJkg = weight>0 ? (watts*duration)/1000/weight : NaN; return `Session: ${fmtDuration(duration)} at ${Math.round(watts)} W (${(frac*100).toFixed(0)}% CP). Load ≈ ${fmtKJkg(kJkg)}.`; }
-
-function buildGuideLines(){
-  const T=state.effDur; const cad=state.cadenceMin; const start=state.startMin; const sched=buildSchedule(T,cad,start);
-  const split=splitFor(state.intakeMode,state.intakeRate); const doseTot=state.intakeRate*(cad/60); const doseG=split.glu*(cad/60); const doseF=split.fru*(cad/60);
-  const header=[
-    'Interactive Simulator (Nutrition Planning) — Handlebar Guide',
-    `Author: Gabriel Della Mattia · Produced for AGMT2.TEAM`,
-    `CP ${state.cp} W · Effort ${Math.round(state.effW)} W for ${fmtDuration(state.effDur)} (GE ${Math.round(state.efficiency*100)}%)`,
-    `Mode ${state.intakeMode} · Intake ${Math.round(state.intakeRate)} g/h · Cadence ${cad}′ · Start ${start}′`,
-    `Dose ${Math.round(doseTot)} g (G ${Math.round(doseG)} / F ${Math.round(doseF)})`,
-    '---'
-  ];
-  const lines = sched.map(t=> `${fmtDuration(t)}  —  ${Math.round(doseTot)} g  (G ${Math.round(doseG)}, F ${Math.round(doseF)})`);
-  if(lines.length===0) lines.push('[No doses in the selected duration]');
-  return header.concat(lines);
+/* ---------- dosing ---------- */
+function dosePlan(dur_s, cadence_min, start_min, rate_gph){
+  const dur_min=dur_s/60, doseSize=rate_gph*(cadence_min/60);
+  const times=[]; for(let t=start_min; t<=dur_min+1e-6; t+=cadence_min) if(t>=0&&t<=dur_min) times.push(t);
+  return {doseSize,times,n:times.length,last:times.length?`${Math.floor(times.at(-1))}′`:'-'};
 }
 
-function exportTXT(){
-  const text = buildGuideLines().join('\n');
-  const blob = new Blob([text], {type:'text/plain'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'handlebar_guide.txt';
-  document.body.appendChild(a); a.click(); a.remove();
-}
-
-async function copyGuide(){
-  const text = buildGuideLines().join('\n');
-  try{ await navigator.clipboard.writeText(text); alert('Guide copied to clipboard'); }catch(e){ console.warn('Clipboard failed, downloading instead'); exportTXT(); }
-}
+/* ---------- recompute + draw ---------- */
+const chart=document.getElementById('chart'), overlay=document.getElementById('overlay');
 
 function recompute(){
-  // MMP & CP
-  state.mmp = state.rows.length ? buildMMP(state.rows) : [];
-  if(state.mmp.length){ const est=estimateCP(state.mmp); state.cpEst = est.cp; state.wPrime = est.wPrime; if(state.autoCP && Number.isFinite(est.cp)){ state.cp = Math.round(est.cp); document.getElementById('inp-cp').value = state.cp; } }
-  document.getElementById('pill-cp').textContent = (Number.isFinite(state.cpEst)&&Number.isFinite(state.wPrime))?`CP ${Math.round(state.cpEst)} · W′ ${Math.round(state.wPrime)} J`: 'CP ? · W′ ?';
+  overlay.style.display=(state.dur<7200)?'':'none';
 
-  // Coverage
-  state.dateRange = inferDateRange(state.rows);
-  const cov = state.dateRange ? `Coverage: ${state.dateRange.min.toLocaleDateString()} – ${state.dateRange.max.toLocaleDateString()}` : 'Load your CSV to estimate CP';
-  document.getElementById('lbl-coverage').textContent = cov;
+  const {fatFrac,choFrac,peakFat}=fuelMix(state.power,state.cp,state.athlete);
+  $('#pill-mix').textContent=`${Math.round(fatFrac*100)}% fat / ${Math.round(choFrac*100)}% CHO`;
+  $('#pill-fatpeak').textContent=peakFat;
 
-  // Energy calc
-  const frac = state.cp>0 ? state.effW/state.cp : 0; const kJ=(state.effW*state.effDur)/1000; const kJmet=kJ/Math.max(0.01,state.efficiency); const kcal=kJmet/4.184; const kJkg=state.weight>0?kJ/state.weight:NaN; const kcalkg=state.weight>0?kcal/state.weight:NaN;
-  const domain = frac<0.75?'Endurance':(frac<=1.0?'Moderate':'Severe');
-  document.getElementById('pill-domain').textContent = domain; document.getElementById('pill-int').textContent = Math.round(frac*100)+'% CP'; document.getElementById('pill-kjkg').textContent = fmtKJkg(kJkg); document.getElementById('pill-kj').textContent = Math.round(kJ)+' kJ'; document.getElementById('pill-kcal').textContent = Math.round(kcal)+' kcal'; document.getElementById('pill-kcalkg').textContent = Number.isFinite(kcalkg)?kcalkg.toFixed(1)+' kcal/kg':'-'; document.getElementById('lbl-dur').textContent = fmtDuration(state.effDur); document.getElementById('lbl-w').textContent = Math.round(state.effW)+' W'; document.getElementById('lbl-eff').textContent = Math.round(state.efficiency*100)+'%';
-  document.getElementById('txt-session').textContent = describeSession({duration:state.effDur, watts:state.effW, cp:state.cp, weight:state.weight});
+  const r=state.power/Math.max(1,state.cp);
+  $('#pill-domain').textContent=(r<0.6)?'Moderate':(r<1.0)?'Heavy':(r<1.2)?'Severe':'Extreme';
+  $('#pill-int').textContent=`${Math.round(r*100)}% CP`;
 
-  // Fuel mix UI
-  const mixUI = getFuelMix(frac);
-  const peakPct = Math.round((ATH[state.athleteType]||ATH.moderate).peak_x*100);
-  const pillMix = document.getElementById('pill-mix'); if(pillMix){ pillMix.textContent = `${Math.round(mixUI.fFat*100)}% fat · ${Math.round(mixUI.fCHO*100)}% CHO${mixUI.manual? ' (manual)' : ''}`; }
-  const pillPeak = document.getElementById('pill-fatpeak'); if(pillPeak){ pillPeak.textContent = `Peak fat ~ ${peakPct}% CP`; }
+  const mech_kJ=state.power*state.dur/1000, met_kJ=mech_kJ/Math.max(0.01,state.eff), met_kcal=met_kJ*0.239006;
+  $('#pill-kj').textContent=`${Math.round(mech_kJ)}`;
+  $('#pill-kcal').textContent=`${Math.round(met_kcal)}`;
+  $('#pill-kjkg').textContent=(mech_kJ/state.weight).toFixed(1);
+  $('#pill-kcalkg').textContent=(met_kcal/state.weight).toFixed(1);
 
-  // CHO totals & caps
-  const mix=getFuelMix(frac); const fCHO=mix.fCHO; const choReq_g=(kcal*fCHO)/4.0; const hrs=Math.max(state.effDur/3600,1e-6); const exo_g=state.intakeRate*hrs; const glyEnd = state.glyInit + exo_g - choReq_g; const need_g=Math.max(0,(choReq_g + state.glyReserve - state.glyInit)); const rec_gph=need_g/hrs; const cap = capForMode(state.intakeMode); state.intakeCap=cap;
-  document.getElementById('pill-cho-req').textContent = `${Math.round(choReq_g)} g total CHO`; document.getElementById('pill-cho-exo').textContent = `${Math.round(exo_g)} g`; document.getElementById('pill-gly-end').textContent = `${Math.round(glyEnd)} g`; document.getElementById('lbl-intake').textContent = Math.round(state.intakeRate)+' g/h'; document.getElementById('lbl-intakecap').textContent = cap;
-  const recTxt = (state.effDur<7200) ? 'For <2 h, fueling is generally optional (unless high intensity/low glycogen).' : (rec_gph<=cap ? `Minimum to avoid dipping reserves: ${Math.max(0,Math.round(rec_gph))} g/h (cap ${cap})` : `Needed ${Math.round(rec_gph)} g/h > cap ${cap}. Adjust intensity or gut‑train.`);
-  document.getElementById('pill-cho-rec').textContent = recTxt; const split=splitFor(state.intakeMode,state.intakeRate); document.getElementById('pill-split').textContent = `Glucose ${Math.round(split.glu)} g/h · Fructose ${Math.round(split.fru)} g/h`;
+  const {doseSize,times,n,last}=dosePlan(state.dur,state.cadence,state.startMin,state.intake);
+  $('#pill-dose').textContent=`${Math.round(doseSize)} g every ${state.cadence}′`;
+  $('#pill-dose-n').textContent=`${n}`;
+  $('#pill-dose-last').textContent=last;
 
-  // Dosing schedule summary
-  const sched = buildSchedule(state.effDur, state.cadenceMin, state.startMin); const dose = state.intakeRate*(state.cadenceMin/60); const last = sched.length? sched[sched.length-1] : null; document.getElementById('pill-dose').textContent = `${Math.round(dose)} g every ${state.cadenceMin}′`; document.getElementById('pill-dose-n').textContent = String(sched.length); document.getElementById('pill-dose-last').textContent = last? fmtDuration(last) : '-';
+  // simulación simple (g/min)
+  const mins=Math.ceil(state.dur/60);
+  let gly=state.glyInit;
+  const series=[], cho_rate_gpm=state.intake/60;
+  for(let m=0;m<=mins;m++){
+    const kcal_min=(state.power/Math.max(0.01,state.eff))*60/4184;
+    const cho_need_gpm=(kcal_min*(1-fuelMix(state.power,state.cp,state.athlete).fatFrac))/4.0;
+    const exo=cho_rate_gpm; // bolus solo visual
+    gly=Math.max(0, gly - Math.max(0,cho_need_gpm - exo));
+    series.push({t:m,g:gly});
+  }
 
-  // Slider caps
-  const rng=document.getElementById('rng-intake'); rng.max=String(cap); if(state.intakeRate>cap){ state.intakeRate=cap; rng.value=String(cap);} 
+  const cho_required=series.reduce((a,_,i)=>i?a+Math.max(0,series[i-1].g - series[i].g):0,0);
+  const exogenous_total=(state.intake/60)*mins;
+  $('#pill-cho-req').textContent=`${Math.round(cho_required)} g`;
+  $('#pill-cho-exo').textContent=`${Math.round(exogenous_total)} g`;
+  $('#pill-gly-end').textContent=`${Math.round(series.at(-1).g)} g`;
+  $('#pill-cho-rec').textContent=(series.at(-1).g<state.glyReserve)?'Increase intake or reduce intensity':'OK';
+  $('#pill-split').textContent=n?`${Math.round(doseSize)} g × ${n} doses (${state.cadence}′)`:'—';
 
-  // Draw
-  drawTimeline();
+  drawTimeline(series,times,doseSize);
 }
 
-// ======== Events ========
-const fileInput=document.getElementById('file'); const btnUpload=document.getElementById('btn-upload'); btnUpload.addEventListener('click',()=>fileInput.click()); fileInput.addEventListener('change', async (e)=>{ const f=e.target.files && e.target.files[0]; if(!f) return; const text=await f.text(); state.rows=parseCSVToRows(text); recompute(); });
+/* ---------- svg utils ---------- */
+function svgEl(tag,attrs={}){const el=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const k in attrs)el.setAttribute(k,attrs[k]);return el;}
+const svgLine=(x1,y1,x2,y2,a)=>svgEl('line',Object.assign({x1,y1,x2,y2},a));
+const svgRect=(x,y,w,h,a)=>svgEl('rect',Object.assign({x,y,width:w,height:h,rx:0,ry:0},a));
+const svgPath=(d,a)=>svgEl('path',Object.assign({d},a));
+const svgText=(x,y,txt,a)=>{const t=svgEl('text',Object.assign({x,y},a));t.textContent=txt;return t;};
 
-document.getElementById('btn-export').addEventListener('click', exportTXT);
+/* ---------- drawing ---------- */
+function drawTimeline(series, doseTimes, doseSize){
+  const W = chart.viewBox.baseVal.width  || 900;
+  const H = chart.viewBox.baseVal.height || 320;
+  const pad = { l:48, r:10, t:10, b:26 }, iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
 
-document.getElementById('btn-copy').addEventListener('click', copyGuide);
+  // Escalas
+  const Gmax = Math.max(100, Math.max(state.glyInit, state.glyReserve) * 1.05);
+  const yG = g => pad.t + ih - (g / Gmax) * ih;
+  const xT = m => pad.l + (m / (state.dur / 60)) * iw; // m = minutos
 
-document.getElementById('inp-weight').addEventListener('input', e=>{ state.weight=clamp(Number(e.target.value),30,120); recompute(); });
+  chart.innerHTML = '';
 
-document.getElementById('inp-cp').addEventListener('input', e=>{ state.cp=clamp(Number(e.target.value),120,500); state.autoCP=false; document.getElementById('chk-cp-auto').checked=false; recompute(); });
+  // ---- Ejes
+  const gAxis = svgEl('g', { stroke:'#2b3c57', 'stroke-width':'1' });
 
-document.getElementById('chk-cp-auto').addEventListener('change', e=>{ state.autoCP=e.target.checked; recompute(); });
+  // Y (g de glucógeno)
+  for (let i = 0; i <= 5; i++){
+    const gy = pad.t + ih * (i/5);
+    const val = Math.round(Gmax * (1 - i/5));
+    gAxis.appendChild(svgLine(pad.l, gy, W - pad.r, gy, { stroke:'#1a263c' }));
+    const txt = svgText(8, gy + 4, `${val} g`, { fill:'#9fb2c7', 'font-size':'10px' });
+    txt.setAttribute('x', 8);
+    gAxis.appendChild(txt);
+  }
 
-document.getElementById('rng-dur').addEventListener('input', e=>{ state.effDur=Number(e.target.value); if(state.effDur<7200 && state.startMin<120){ state.startMin=120; document.getElementById('sel-start').value='120'; } if(state.effDur>=7200 && state.startMin>=120){ state.startMin=15; document.getElementById('sel-start').value='15'; } recompute(); });
+  // X (min u horas)
+  const durMin  = Math.round(state.dur / 60);
+  const xTick   = durMin > 720 ? 120 : durMin > 360 ? 60 : 30; // 120' (2h), 60', 30'
+  const useHours = durMin >= 180; // desde 3h mostramos "xh"
 
-document.getElementById('rng-w').addEventListener('input', e=>{ state.effW=Number(e.target.value); recompute(); });
+  for (let m = 0; m <= durMin + 0.001; m += xTick){
+    const gx  = xT(m);
+    const lbl = useHours ? `${Math.round(m/60)}h` : `${m}′`;
+    gAxis.appendChild(svgLine(gx, pad.t, gx, pad.t + ih, { stroke:'#1a263c' }));
+    gAxis.appendChild(svgText(gx, H - 6, lbl, { fill:'#9fb2c7', 'font-size':'10px', 'text-anchor':'middle' }));
+  }
+  chart.appendChild(gAxis);
 
-document.getElementById('rng-eff').addEventListener('input', e=>{ state.efficiency=Number(e.target.value); recompute(); });
+  // ---- Zona de reserva (roja)
+  const yReserve = yG(state.glyReserve);
+  chart.appendChild(svgRect(pad.l, yReserve, iw, pad.t + ih - yReserve, { fill:'#ef4444', opacity:0.18 }));
+  chart.appendChild(svgLine(pad.l, yReserve, pad.l + iw, yReserve, { stroke:'#ef4444', 'stroke-dasharray':'4 4', 'stroke-width':1.5 }));
 
-document.getElementById('sel-mode').addEventListener('change', e=>{ state.intakeMode=e.target.value; state.intakeCap=capForMode(state.intakeMode); recompute(); });
-
-document.getElementById('sel-athlete').addEventListener('change', e=>{ state.athleteType = e.target.value; recompute(); });
-
-
-const chk = document.getElementById('chk-manualmix');
-const rng = document.getElementById('rng-fat');
-const pillManual = document.getElementById('pill-manualmix');
-
-if(chk){
-  chk.addEventListener('change', e=>{
-    state.manualMix.enabled = !!e.target.checked;
-    if(rng){ rng.disabled = !state.manualMix.enabled; }
-    if(pillManual){ pillManual.textContent = state.manualMix.enabled ? 'on' : 'off'; }
-    recompute();
+  // ---- Barras de dosis (violeta), altura proporcional a gramos/dosis
+  const barW = Math.max(6, iw / (durMin + 1) / 1);
+  doseTimes.forEach(t => {
+    const x = xT(t) - barW / 2;
+    const y = yG(doseSize);
+    const h = (pad.t + ih) - y;
+    chart.appendChild(svgRect(x, y, barW, h, { fill:'#a78bfa', opacity:0.45, stroke:'#a78bfa', 'stroke-width':1 }));
   });
+
+  // ---- Curva de glucógeno (celeste)
+  const pathD = series.map((p,i) => `${i ? 'L':'M'} ${xT(p.t)} ${yG(p.g)}`).join(' ');
+  chart.appendChild(svgPath(pathD, { fill:'none', stroke:'#22d3ee', 'stroke-width':2.2 }));
 }
-if(rng){
-  rng.addEventListener('input', e=>{
-    const v = parseFloat(e.target.value)||0;
-    state.manualMix.fat = v/100;
-    if(pillManual){ pillManual.textContent = state.manualMix.enabled ? `on · ${v}% fat` : 'off'; }
-    recompute();
-  });
-}
-// initialize pill text
-if(pillManual){ pillManual.textContent = state.manualMix.enabled ? `on · ${Math.round((state.manualMix.fat||0)*100)}% fat` : 'off'; }
 
 
-document.getElementById('rng-intake').addEventListener('input', e=>{ state.intakeRate=Number(e.target.value); recompute(); });
+/* ---------- init ---------- */
+document.addEventListener('DOMContentLoaded', ()=>{
+  $('#lbl-w').textContent=`${state.power} W`;
+  $('#lbl-eff').textContent=`${Math.round(state.eff*100)}%`;
+  $('#lbl-dur').textContent=fmtDur(state.dur);
+  $('#lbl-intakecap').textContent='90';
+  $('#lbl-intake').textContent=`${state.intake} g/h`;
+  $('#pill-cp').textContent=`CP ${state.cp} · W′ ?`;
 
-document.getElementById('sel-cad').addEventListener('change', e=>{ state.cadenceMin=Number(e.target.value); recompute(); });
-
-document.getElementById('sel-start').addEventListener('change', e=>{ state.startMin=Number(e.target.value); recompute(); });
-
-// CSV parser (wide/long)
-function parseCSVToRows(text){ const lines=text.split(/\r?\n/).filter(l=>l.trim().length>0); if(!lines.length) return []; lines[0]=lines[0].replace(/^\ufeff/,""); const SEP=/[;\,\t]/; const header=lines[0].split(SEP).map(c=>c.trim()); const lower=header.map(h=>h.toLowerCase()); const isWide=lower.some(h=>/^m\d+$/.test(h)); if(isWide){ const idxFecha=Math.max(0, lower.findIndex(h=>/fecha|date/.test(h))); const durCols=header.map((h,i)=>{ const m=/^m(\d+)$/.exec(h.trim().toLowerCase()); return m?{i,sec:Number(m[1])}:null; }).filter(Boolean); const rows=[]; for(let r=1;r<lines.length;r++){ const cols=lines[r].split(SEP).map(c=>c.trim()); if(cols.length<header.length) continue; const fecha=cols[idxFecha]||""; for(const d of durCols){ const val=String(cols[d.i]??"").trim(); if(!val) continue; const pow=Number(val.replace(/[^0-9.\-]/g,"")); if(Number.isFinite(pow)) rows.push({fecha,dur_s:d.sec,power:pow}); } } return rows; } let start=0, idxF=0, idxD=1, idxP=2; if (/(fecha|date|duraci|duration|poten|power)/i.test(header.join(" "))){ idxF=Math.max(0,lower.findIndex(c=>/fecha|date/.test(c))); idxD=Math.max(0,lower.findIndex(c=>/durac|dur|duration/.test(c))); idxP=Math.max(0,lower.findIndex(c=>/poten|power|w\b/.test(c))); if(idxF<0) idxF=0; if(idxD<0) idxD=1; if(idxP<0) idxP=2; start=1; } function parseDurationToken(tok){ if(!tok) return NaN; const t=String(tok).trim().toLowerCase().replace(/\s+/g,""); if(!t) return NaN; if(t.startsWith("m") && /^m\d+(\.\d+)?$/.test(t)) return Number(t.slice(1)); if(t.startsWith("s") && /^s\d+(\.\d+)?$/.test(t)) return Number(t.slice(1)); if(t.includes(":")){ const parts=t.split(":").map(Number); if(parts.some(x=>!Number.isFinite(x))) return NaN; if(parts.length===3){const[hh,mm,ss]=parts; return hh*3600+mm*60+ss;} if(parts.length===2){const[mm,ss]=parts; return mm*60+ss;} } if(/\d+h/.test(t)||/\d+m/.test(t)||/\d+s/.test(t)){ const hh=Number((t.match(/(\d+)h/)||[])[1]||0); const mm=Number((t.match(/(\d+)m/)||[])[1]||0); const ss=Number((t.match(/(\d+)s/)||[])[1]||0); return hh*3600+mm*60+ss;} const n=Number(t.replace(/[^0-9.\-]/g,"")); return Number.isFinite(n)?n:NaN; } function parsePowerToken(tok){ if(!tok) return NaN; const n=Number(String(tok).replace(/[^0-9.\-]/g,"")); return Number.isFinite(n)?n:NaN; } const rows=[]; for(let i=start;i<lines.length;i++){ const cols=lines[i].split(SEP).map(c=>c.trim()); if(cols.length<3) continue; const fecha=cols[idxF]??""; const dur=parseDurationToken(cols[idxD]); const pow=parsePowerToken(cols[idxP]); if(Number.isFinite(dur)&&Number.isFinite(pow)) rows.push({fecha,dur_s:dur,power:pow}); } return rows; }
-
-// ======== Tests ========
-(function runTests(){ try{ const required=['inp-weight','inp-cp','chk-cp-auto','btn-upload','file','chart','overlay','rng-dur','rng-w','rng-eff','lbl-dur','lbl-w','lbl-eff','pill-cp','sel-cad','sel-start','rng-intake','sel-mode','btn-export','btn-copy']; const missing=required.filter(id=>!document.getElementById(id)); console.assert(missing.length===0,'Missing elements:',missing); const sched=buildSchedule(3600,15,15); console.assert(sched.length===3,'1h/15′ from 15′ should yield 3 doses'); console.log('%cBasic tests OK','color:lightgreen'); }catch(e){ console.error('Tests failed',e);} })();
-
-// init
-recompute();
+  wireInputs();
+  recompute();
+});
 </script>
 </body>
 </html>
