@@ -94,6 +94,35 @@
           <div class="t">Estimation</div>
           <div class="v" id="pill-cp">CP ? · W′ ?</div>
         </div>
+
+        <div class="row-tight" id="row-manualmix" style="margin-top:6px;align-items:center;gap:12px">
+          <label style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="chk-manualmix">
+            <span class="label" style="margin:0">Manual fuel mix (what‑if)</span>
+          </label>
+          <label style="flex:1">
+            <div class="label">% Fat (what‑if)</div>
+            <input type="range" id="rng-fat" min="0" max="95" step="1" value="60" disabled>
+          </label>
+          <div class="pill" style="min-width:120px">
+            <div class="t">Manual</div>
+            <div class="v" id="pill-manualmix">off</div>
+          </div>
+        </div>
+
+        <div class="row-tight" style="margin-top:6px">
+          <label>
+            <div class="label">Athlete type</div>
+            <select id="sel-athlete">
+              <option value="trained">Well‑trained</option>
+              <option value="moderate" selected>Moderately trained</option>
+              <option value="untrained">Low trained</option>
+            </select>
+          </label>
+          <div class="pill"><div class="t">Fuel mix</div><div class="v" id="pill-mix">-</div></div>
+          <div class="pill"><div class="t">Peak fat</div><div class="v" id="pill-fatpeak">-</div></div>
+        </div>
+
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
           <div>
             <div style="font-size:13px;font-weight:600">Power Curves (CSV)</div>
@@ -122,11 +151,43 @@
             <input id="rng-eff" type="range" min="0.18" max="0.25" step="0.01" value="0.24"/>
           </label>
         </div>
+
+        <div class="row-tight" id="row-manualmix" style="margin-top:6px;align-items:center;gap:12px">
+          <label style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="chk-manualmix">
+            <span class="label" style="margin:0">Manual fuel mix (what‑if)</span>
+          </label>
+          <label style="flex:1">
+            <div class="label">% Fat (what‑if)</div>
+            <input type="range" id="rng-fat" min="0" max="95" step="1" value="60" disabled>
+          </label>
+          <div class="pill" style="min-width:120px">
+            <div class="t">Manual</div>
+            <div class="v" id="pill-manualmix">off</div>
+          </div>
+        </div>
+
         <div class="row-tight" style="margin-top:6px">
           <div class="pill"><div class="t">Domain</div><div class="v" id="pill-domain">-</div></div>
           <div class="pill"><div class="t">Intensity</div><div class="v" id="pill-int">-</div></div>
           <div class="pill"><div class="t">kJ/kg</div><div class="v" id="pill-kjkg">-</div></div>
         </div>
+
+        <div class="row-tight" id="row-manualmix" style="margin-top:6px;align-items:center;gap:12px">
+          <label style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="chk-manualmix">
+            <span class="label" style="margin:0">Manual fuel mix (what‑if)</span>
+          </label>
+          <label style="flex:1">
+            <div class="label">% Fat (what‑if)</div>
+            <input type="range" id="rng-fat" min="0" max="95" step="1" value="60" disabled>
+          </label>
+          <div class="pill" style="min-width:120px">
+            <div class="t">Manual</div>
+            <div class="v" id="pill-manualmix">off</div>
+          </div>
+        </div>
+
         <div class="row-tight" style="margin-top:6px">
           <div class="pill"><div class="t">Mechanical kJ</div><div class="v" id="pill-kj">-</div></div>
           <div class="pill"><div class="t">Metabolic kcal</div><div class="v" id="pill-kcal">-</div></div>
@@ -137,7 +198,7 @@
       <div class="card" style="margin-top:8px">
         <div style="font-size:13px;font-weight:600;margin-bottom:4px">Didactic text</div>
         <div id="txt-session" style="color:#e5e7eb"></div>
-        <div class="hint" style="margin-top:6px">kJ/kg = (W·s)/1000/kg. CHO fraction ↑ with %CP.</div>
+        <div class="hint" style="margin-top:6px">kJ/kg = (W·s)/1000/kg. Fuel mix shifts with intensity and training; trained athletes oxidize more fat at a given %CP.</div>
       </div>
     </div>
 
@@ -252,6 +313,8 @@ const state = {
   mmp: [],
   dateRange: null,
   efficiency: 0.24,
+  athleteType: "moderate",
+  manualMix: { enabled:false, fat:0.60 },
   // Fueling
   glyInit: 400,
   glyReserve: 100,
@@ -287,6 +350,52 @@ function estimateCP(mmp){
 }
 
 // ======== Fueling helpers ========
+
+// ======== Fuel-mix model (fat vs CHO) ========
+// Parametrized by training status; intensities expressed as fraction of CP (proxy for %MLSS/%FTP)
+const ATH = {
+  trained:   {peak_x:0.65, peak_y:0.70, low:0.50, high_x:1.05, high_y:0.02, a:1.2, b:2.5},
+  moderate:  {peak_x:0.55, peak_y:0.60, low:0.45, high_x:1.00, high_y:0.02, a:1.2, b:2.2},
+  untrained: {peak_x:0.50, peak_y:0.50, low:0.40, high_x:0.95, high_y:0.01, a:1.2, b:2.0},
+};
+
+function fatFractionByRelIntensity(fr, type){
+  if(!Number.isFinite(fr)) return 0.5;
+  const P = ATH[type] || ATH.moderate;
+  const x = Math.max(0, fr);
+  const a = P.a, b = P.b;
+  // rise to peak (power law)
+  let fat;
+  if(x <= P.peak_x){
+    const r = P.peak_x>0? (x / P.peak_x) : 0;
+    fat = P.low + (P.peak_y - P.low) * Math.pow(Math.max(0, Math.min(1, r)), a);
+  } else {
+    // fall from peak to near-zero at high_x
+    const r = P.high_x> P.peak_x ? (x - P.peak_x) / (P.high_x - P.peak_x) : 1;
+    fat = Math.max(P.high_y, P.peak_y * Math.max(0, 1 - Math.pow(Math.max(0, Math.min(1, r)), b)));
+    if(x >= P.high_x) fat = P.high_y;
+  }
+  return clamp(fat, 0, 0.95);
+}
+
+function fuelMix(fr, type){
+  const fFat = fatFractionByRelIntensity(fr, type);
+  const fCHO = clamp(1 - fFat, 0.05, 0.98); // ignore protein
+  return { fFat, fCHO };
+}
+
+
+function getFuelMix(frac){
+  if(state.manualMix && state.manualMix.enabled){
+    const fFat = clamp(state.manualMix.fat, 0, 0.95);
+    const fCHO = clamp(1 - fFat, 0.05, 0.98);
+    return { fFat, fCHO, manual:true };
+  }
+  const m = fuelMix(frac, state.athleteType);
+  return { fFat:m.fFat, fCHO:m.fCHO, manual:false };
+}
+
+
 function choFractionByCP(fr){ if(!Number.isFinite(fr)) return 0.6; if(fr<=0.60) return 0.35; if(fr<=0.75) return 0.35 + (fr-0.60)*(0.25/0.15); if(fr<=1.00) return 0.60 + (fr-0.75)*(0.25/0.25); return Math.min(1.0, 0.85 + (fr-1.0)*0.30); }
 function capForMode(m){ return m==='G60'?60:(m==='GF90'?90:120); }
 function splitFor(mode, rate){ rate=Math.max(0,rate); if(mode==='G60') return {glu:rate, fru:0}; if(mode==='GF90') return {glu:Math.min(60,rate), fru:Math.max(0, rate-Math.min(60,rate))}; const r=Math.min(120,rate); const glu=Math.min(60, Math.round(r/2)); const fru=r-glu; return {glu, fru}; }
@@ -300,7 +409,7 @@ function buildSchedule(durationSec, cadenceMin, startMin){ const times=[]; const
 
 function simulateGlyCurve(T){
   const dt=60; // 1 min
-  const watts=state.effW, eff=Math.max(0.01,state.efficiency), frac=state.cp>0?watts/state.cp:0; const fCHO=choFractionByCP(frac);
+  const watts=state.effW, eff=Math.max(0.01,state.efficiency), frac=state.cp>0?watts/state.cp:0; const mix=getFuelMix(frac); const fCHO=mix.fCHO;
   const cho_req_gps = (watts/eff)/4184 * fCHO / 4.0; // g/s
   const cap_gps = capForMode(state.intakeMode)/3600;
   const sched = buildSchedule(T,state.cadenceMin,state.startMin);
@@ -428,8 +537,14 @@ function recompute(){
   document.getElementById('pill-domain').textContent = domain; document.getElementById('pill-int').textContent = Math.round(frac*100)+'% CP'; document.getElementById('pill-kjkg').textContent = fmtKJkg(kJkg); document.getElementById('pill-kj').textContent = Math.round(kJ)+' kJ'; document.getElementById('pill-kcal').textContent = Math.round(kcal)+' kcal'; document.getElementById('pill-kcalkg').textContent = Number.isFinite(kcalkg)?kcalkg.toFixed(1)+' kcal/kg':'-'; document.getElementById('lbl-dur').textContent = fmtDuration(state.effDur); document.getElementById('lbl-w').textContent = Math.round(state.effW)+' W'; document.getElementById('lbl-eff').textContent = Math.round(state.efficiency*100)+'%';
   document.getElementById('txt-session').textContent = describeSession({duration:state.effDur, watts:state.effW, cp:state.cp, weight:state.weight});
 
+  // Fuel mix UI
+  const mixUI = getFuelMix(frac);
+  const peakPct = Math.round((ATH[state.athleteType]||ATH.moderate).peak_x*100);
+  const pillMix = document.getElementById('pill-mix'); if(pillMix){ pillMix.textContent = `${Math.round(mixUI.fFat*100)}% fat · ${Math.round(mixUI.fCHO*100)}% CHO${mixUI.manual? ' (manual)' : ''}`; }
+  const pillPeak = document.getElementById('pill-fatpeak'); if(pillPeak){ pillPeak.textContent = `Peak fat ~ ${peakPct}% CP`; }
+
   // CHO totals & caps
-  const fCHO=choFractionByCP(frac); const choReq_g=(kcal*fCHO)/4.0; const hrs=Math.max(state.effDur/3600,1e-6); const exo_g=state.intakeRate*hrs; const glyEnd = state.glyInit + exo_g - choReq_g; const need_g=Math.max(0,(choReq_g + state.glyReserve - state.glyInit)); const rec_gph=need_g/hrs; const cap = capForMode(state.intakeMode); state.intakeCap=cap;
+  const mix=getFuelMix(frac); const fCHO=mix.fCHO; const choReq_g=(kcal*fCHO)/4.0; const hrs=Math.max(state.effDur/3600,1e-6); const exo_g=state.intakeRate*hrs; const glyEnd = state.glyInit + exo_g - choReq_g; const need_g=Math.max(0,(choReq_g + state.glyReserve - state.glyInit)); const rec_gph=need_g/hrs; const cap = capForMode(state.intakeMode); state.intakeCap=cap;
   document.getElementById('pill-cho-req').textContent = `${Math.round(choReq_g)} g total CHO`; document.getElementById('pill-cho-exo').textContent = `${Math.round(exo_g)} g`; document.getElementById('pill-gly-end').textContent = `${Math.round(glyEnd)} g`; document.getElementById('lbl-intake').textContent = Math.round(state.intakeRate)+' g/h'; document.getElementById('lbl-intakecap').textContent = cap;
   const recTxt = (state.effDur<7200) ? 'For <2 h, fueling is generally optional (unless high intensity/low glycogen).' : (rec_gph<=cap ? `Minimum to avoid dipping reserves: ${Math.max(0,Math.round(rec_gph))} g/h (cap ${cap})` : `Needed ${Math.round(rec_gph)} g/h > cap ${cap}. Adjust intensity or gut‑train.`);
   document.getElementById('pill-cho-rec').textContent = recTxt; const split=splitFor(state.intakeMode,state.intakeRate); document.getElementById('pill-split').textContent = `Glucose ${Math.round(split.glu)} g/h · Fructose ${Math.round(split.fru)} g/h`;
@@ -464,6 +579,33 @@ document.getElementById('rng-w').addEventListener('input', e=>{ state.effW=Numbe
 document.getElementById('rng-eff').addEventListener('input', e=>{ state.efficiency=Number(e.target.value); recompute(); });
 
 document.getElementById('sel-mode').addEventListener('change', e=>{ state.intakeMode=e.target.value; state.intakeCap=capForMode(state.intakeMode); recompute(); });
+
+document.getElementById('sel-athlete').addEventListener('change', e=>{ state.athleteType = e.target.value; recompute(); });
+
+
+const chk = document.getElementById('chk-manualmix');
+const rng = document.getElementById('rng-fat');
+const pillManual = document.getElementById('pill-manualmix');
+
+if(chk){
+  chk.addEventListener('change', e=>{
+    state.manualMix.enabled = !!e.target.checked;
+    if(rng){ rng.disabled = !state.manualMix.enabled; }
+    if(pillManual){ pillManual.textContent = state.manualMix.enabled ? 'on' : 'off'; }
+    recompute();
+  });
+}
+if(rng){
+  rng.addEventListener('input', e=>{
+    const v = parseFloat(e.target.value)||0;
+    state.manualMix.fat = v/100;
+    if(pillManual){ pillManual.textContent = state.manualMix.enabled ? `on · ${v}% fat` : 'off'; }
+    recompute();
+  });
+}
+// initialize pill text
+if(pillManual){ pillManual.textContent = state.manualMix.enabled ? `on · ${Math.round((state.manualMix.fat||0)*100)}% fat` : 'off'; }
+
 
 document.getElementById('rng-intake').addEventListener('input', e=>{ state.intakeRate=Number(e.target.value); recompute(); });
 
